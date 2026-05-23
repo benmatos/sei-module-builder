@@ -8,9 +8,11 @@ TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates", "modulo")
 class ModuloSEIGenerator:
     def __init__(self):
         self.env = get_jinja_env(TEMPLATES_DIR)
+        self.ultimo_arquivo_count: list[str] = []
 
     def gerar_modulo(self, definicao: ModuloDefinicao) -> bytes:
         buf = io.BytesIO()
+        self.ultimo_arquivo_count = []
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
             self._adicionar_integracao(zf, definicao)
             self._adicionar_dtos(zf, definicao)
@@ -23,10 +25,33 @@ class ModuloSEIGenerator:
         buf.seek(0)
         return buf.read()
 
+    def renderizar_preview(self, definicao: ModuloDefinicao) -> dict[str, str]:
+        """Retorna {caminho: conteudo} sem gerar ZIP — usado pelo endpoint /api/preview."""
+        resultado: dict[str, str] = {}
+        ns = to_pascal_case(definicao.namespace)
+
+        resultado[f"{ns}Integracao.php"] = self._render("integracao.php.j2", d=definicao, ns=ns)
+
+        for t in definicao.tabelas:
+            tn = to_pascal_case(t.nome)
+            resultado[f"{ns}{tn}DTO.php"]        = self._render("dto.php.j2",        d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{ns}{tn}RN.php"]         = self._render("rn.php.j2",         d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{ns}{tn}Controller.php"] = self._render("controller.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{definicao.slug}_{t.nome}_listar.php"]    = self._render("view_listar.php.j2",    d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{definicao.slug}_{t.nome}_cadastrar.php"] = self._render("view_cadastrar.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
+
+        resultado["sei_atualizar.php"]            = self._render("sei_atualizar.php.j2",    d=definicao)
+        resultado["sip_atualizar.php"]            = self._render("sip_atualizar.php.j2",    d=definicao)
+        resultado["ConfiguracaoSEI.exemplo.php"]  = self._render("configuracao_sei.php.j2", d=definicao, ns=ns)
+        resultado["README.md"]                    = self._render("README.md.j2",  d=definicao)
+        resultado["INSTALL.md"]                   = self._render("INSTALL.md.j2", d=definicao)
+        return resultado
+
     def _render(self, name, **ctx):
         return self.env.get_template(name).render(**ctx)
 
     def _write(self, zf, path, content):
+        self.ultimo_arquivo_count.append(path)
         zf.writestr(path, content.encode("utf-8"))
 
     def _adicionar_integracao(self, zf, d):
@@ -56,7 +81,8 @@ class ModuloSEIGenerator:
         for t in d.tabelas:
             tn = to_pascal_case(t.nome)
             for view in ("listar", "cadastrar"):
-                self._write(zf, f"{d.slug}/src/web/view/{d.slug}_{t.nome}_{view}.php", self._render(f"view_{view}.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
+                self._write(zf, f"{d.slug}/src/web/view/{d.slug}_{t.nome}_{view}.php",
+                            self._render(f"view_{view}.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
         self._write(zf, f"{d.slug}/src/web/js/{d.slug}.js", self._render("js.js.j2", d=d))
 
     def _adicionar_scripts(self, zf, d):
@@ -69,4 +95,5 @@ class ModuloSEIGenerator:
 
     def _adicionar_config(self, zf, d):
         ns = to_pascal_case(d.namespace)
-        self._write(zf, f"{d.slug}/config/ConfiguracaoSEI.exemplo.php", self._render("configuracao_sei.php.j2", d=d, ns=ns))
+        self._write(zf, f"{d.slug}/config/ConfiguracaoSEI.exemplo.php",
+                    self._render("configuracao_sei.php.j2", d=d, ns=ns))
