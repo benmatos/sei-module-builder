@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Passo 3 — Recursos e Menus{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Passo 3 de 4 — Recursos e Menus</h1>
+<form method="POST" action="/wizard/3" x-data="rmApp()" x-init="init()">
+  <h2 class="font-semibold mb-2">Recursos</h2>
+  <template x-for="(r, i) in recursos" :key="i">
+    <div class="flex gap-2 mb-2">
+      <input x-model="r.nome" placeholder="md_modulo_acao" class="border rounded px-2 py-1 flex-1"/>
+      <input x-model="r.descricao" placeholder="Descrição" class="border rounded px-2 py-1 flex-1"/>
+      <button type="button" @click="recursos.splice(i,1)" class="text-red-400">✕</button>
+    </div>
+  </template>
+  <button type="button" @click="recursos.push({nome:'',descricao:''})" class="text-blue-600 text-sm mb-4">+ Recurso</button>
+  <h2 class="font-semibold mb-2">Menus</h2>
+  <template x-for="(m, i) in menus" :key="i">
+    <div class="flex gap-2 mb-2 flex-wrap">
+      <input x-model="m.titulo" placeholder="Título" class="border rounded px-2 py-1 flex-1"/>
+      <input x-model="m.link" placeholder="link_action" class="border rounded px-2 py-1 flex-1"/>
+      <input x-model="m.icone" placeholder="fa-list" class="border rounded px-2 py-1 w-32"/>
+      <input x-model="m.perfil_requerido" placeholder="Básico" class="border rounded px-2 py-1 w-28"/>
+      <button type="button" @click="menus.splice(i,1)" class="text-red-400">✕</button>
+    </div>
+  </template>
+  <button type="button" @click="menus.push({titulo:'',link:'',icone:'',perfil_requerido:''})" class="text-blue-600 text-sm mb-4">+ Menu</button>
+  <input type="hidden" name="recursos_json" :value="JSON.stringify(recursos)"/>
+  <input type="hidden" name="menus_json" :value="JSON.stringify(menus)"/>
+  <div class="flex gap-3">
+    <a href="/wizard/2" class="border px-4 py-2 rounded">← Voltar</a>
+    <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800">Próximo →</button>
+  </div>
+</form>
+<script>
+function rmApp(){return{recursos:[],menus:[],init(){try{this.recursos=JSON.parse({{ recursos_json|tojson }});this.menus=JSON.parse({{ menus_json|tojson }});}catch(e){}}}}
+</script>
+{% endblock %}
