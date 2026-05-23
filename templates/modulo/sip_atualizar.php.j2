@@ -1,0 +1,19 @@
+<?php
+// Script de atualização SIP — {{ d.nome }}
+
+require_once dirname(dirname(dirname(dirname(__FILE__)))) . "/SIP.php";
+
+try {
+    $objInfraBanco = BancoSIP::getInstance();
+    {% for recurso in d.recursos %}
+    // Recurso: {{ recurso.nome }}
+    echo "Recurso {{ recurso.nome }} processado.
+";
+    {% endfor %}
+    echo "Script SIP concluido.
+";
+} catch (Exception $e) {
+    echo "ERRO SIP: " . $e->getMessage() . "
+";
+    exit(1);
+}
