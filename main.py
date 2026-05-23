@@ -9,27 +9,29 @@ from pydantic import ValidationError
 from models import ModuloDefinicao
 from generator import ModuloSEIGenerator
 from database import init_db, salvar_projeto, listar_projetos, carregar_projeto, excluir_projeto, registrar_geracao
-from utils import get_jinja_env
-import os as _os
+from deploy import DeployLocal, DeployConfig
 
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-key-change-in-production")
+SECRET_KEY  = os.getenv("SECRET_KEY", "dev-insecure-key-change-in-production")
 SESSION_TTL = int(os.getenv("SESSION_TTL_SECONDS", "7200"))
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+DEBUG       = os.getenv("DEBUG", "false").lower() == "true"
 
 app = FastAPI(title="SEI Module Builder", debug=DEBUG)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=SESSION_TTL)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-@app.on_event("startup")
-async def startup():
-    init_db()
-
 def flash(request, msg, cat="error"):
     request.session.setdefault("_flashes", []).append({"msg": msg, "cat": cat})
 
 def get_flashes(request):
     return request.session.pop("_flashes", [])
+
+def get_deploy_cfg() -> DeployConfig | None:
+    return DeployConfig.from_file("deploy.cfg")
+
+@app.on_event("startup")
+async def startup():
+    init_db()
 
 # ── Wizard ────────────────────────────────────────────────────────────────────
 
@@ -73,14 +75,14 @@ async def w3_get(request: Request):
     return templates.TemplateResponse("wizard/step3.html", {
         "request": request, "flashes": get_flashes(request),
         "recursos_json": json.dumps(request.session.get("step3_recursos", [])),
-        "menus_json": json.dumps(request.session.get("step3_menus", []))
+        "menus_json":    json.dumps(request.session.get("step3_menus", []))
     })
 
 @app.post("/wizard/3", response_class=RedirectResponse)
 async def w3_post(request: Request, recursos_json: str = Form(...), menus_json: str = Form(...)):
     try:
         request.session["step3_recursos"] = json.loads(recursos_json)
-        request.session["step3_menus"] = json.loads(menus_json)
+        request.session["step3_menus"]    = json.loads(menus_json)
     except Exception as e:
         flash(request, f"Erro: {e}")
         return RedirectResponse("/wizard/3", status_code=303)
@@ -88,12 +90,18 @@ async def w3_post(request: Request, recursos_json: str = Form(...), menus_json: 
 
 @app.get("/wizard/4", response_class=HTMLResponse)
 async def w4_get(request: Request):
+    deploy_cfg = get_deploy_cfg()
+    deploy_ativo = deploy_cfg is not None and deploy_cfg.auto_deploy
+    valido, motivo = deploy_cfg.valido() if deploy_cfg else (False, "deploy.cfg não encontrado")
     return templates.TemplateResponse("wizard/step4.html", {
-        "request": request, "flashes": get_flashes(request),
-        "step1": request.session.get("step1", {}),
-        "tabelas": request.session.get("step2", []),
-        "recursos": request.session.get("step3_recursos", []),
-        "menus": request.session.get("step3_menus", []),
+        "request":      request,
+        "flashes":      get_flashes(request),
+        "step1":        request.session.get("step1", {}),
+        "tabelas":      request.session.get("step2", []),
+        "recursos":     request.session.get("step3_recursos", []),
+        "menus":        request.session.get("step3_menus", []),
+        "deploy_ativo": deploy_ativo and valido,
+        "deploy_aviso": motivo if not valido else "",
     })
 
 @app.post("/gerar")
@@ -101,39 +109,69 @@ async def gerar_wizard(request: Request):
     try:
         payload = {
             **request.session.get("step1", {}),
-            "tabelas":   request.session.get("step2", []),
-            "recursos":  request.session.get("step3_recursos", []),
-            "menus":     request.session.get("step3_menus", []),
+            "tabelas":  request.session.get("step2", []),
+            "recursos": request.session.get("step3_recursos", []),
+            "menus":    request.session.get("step3_menus", []),
         }
         definicao = ModuloDefinicao(**payload)
     except ValidationError as e:
         flash(request, f"Dados inválidos: {e.error_count()} erro(s). Revise os passos anteriores.")
         return RedirectResponse("/wizard/4", status_code=303)
 
-    gen = ModuloSEIGenerator()
+    gen       = ModuloSEIGenerator()
     zip_bytes = gen.gerar_modulo(definicao)
 
-    # Persistir projeto e registrar geração
+    # Persistir projeto
     try:
         pid = salvar_projeto(definicao.model_dump())
         registrar_geracao(pid, definicao.versao, len(gen.ultimo_arquivo_count))
     except Exception:
-        pass  # persistência não bloqueia o download
+        pass
+
+    # ── Auto-deploy ───────────────────────────────────────────────────────────
+    deploy_result = None
+    deploy_cfg = get_deploy_cfg()
+    if deploy_cfg and deploy_cfg.auto_deploy:
+        valido, _ = deploy_cfg.valido()
+        if valido:
+            deployer     = DeployLocal(deploy_cfg)
+            deploy_result = deployer.deploy_from_bytes(zip_bytes, definicao.slug, definicao.versao)
+            request.session["ultimo_deploy"] = deploy_result.to_dict()
 
     for k in ("step1", "step2", "step3_recursos", "step3_menus"):
         request.session.pop(k, None)
 
+    # Se deploy ativo, redireciona para página de resultado
+    if deploy_result:
+        return RedirectResponse("/deploy/resultado", status_code=303)
+
+    # Sem deploy: retorna ZIP para download direto
     filename = f"{definicao.slug}_v{definicao.versao}.zip"
-    return StreamingResponse(io.BytesIO(zip_bytes), media_type="application/zip",
-                              headers={"Content-Disposition": f"attachment; filename={filename}"})
+    return StreamingResponse(
+        io.BytesIO(zip_bytes),
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+# ── Resultado do deploy ───────────────────────────────────────────────────────
+
+@app.get("/deploy/resultado", response_class=HTMLResponse)
+async def deploy_resultado(request: Request):
+    result_data = request.session.pop("ultimo_deploy", None)
+    if not result_data:
+        return RedirectResponse("/", status_code=303)
+    return templates.TemplateResponse("deploy/resultado.html", {
+        "request": request,
+        "r":       result_data,
+    })
 
 # ── Projetos ──────────────────────────────────────────────────────────────────
 
 @app.get("/projetos", response_class=HTMLResponse)
 async def projetos_list(request: Request):
     return templates.TemplateResponse("projetos/index.html", {
-        "request": request,
-        "flashes": get_flashes(request),
+        "request":  request,
+        "flashes":  get_flashes(request),
         "projetos": listar_projetos(),
     })
 
@@ -144,9 +182,7 @@ async def projeto_detalhe(request: Request, projeto_id: int):
         flash(request, "Projeto não encontrado.")
         return RedirectResponse("/projetos", status_code=303)
     return templates.TemplateResponse("projetos/detalhe.html", {
-        "request": request,
-        "flashes": get_flashes(request),
-        "projeto": projeto,
+        "request": request, "flashes": get_flashes(request), "projeto": projeto,
     })
 
 @app.post("/projetos/{projeto_id}/carregar", response_class=RedirectResponse)
@@ -156,11 +192,11 @@ async def projeto_carregar(request: Request, projeto_id: int):
         flash(request, "Projeto não encontrado.")
         return RedirectResponse("/projetos", status_code=303)
     d = projeto["definicao"]
-    request.session["step1"] = {k: d[k] for k in ("nome","slug","namespace","descricao","versao","sei_versao_min","autor")}
-    request.session["step2"] = d.get("tabelas", [])
+    request.session["step1"]          = {k: d[k] for k in ("nome","slug","namespace","descricao","versao","sei_versao_min","autor")}
+    request.session["step2"]          = d.get("tabelas", [])
     request.session["step3_recursos"] = d.get("recursos", [])
-    request.session["step3_menus"] = d.get("menus", [])
-    flash(request, f"Projeto '{d['nome']}' carregado com sucesso.", "success")
+    request.session["step3_menus"]    = d.get("menus", [])
+    flash(request, f"Projeto '{d['nome']}' carregado.", "success")
     return RedirectResponse("/wizard/1", status_code=303)
 
 @app.post("/projetos/{projeto_id}/excluir", response_class=RedirectResponse)
@@ -173,9 +209,9 @@ async def projeto_excluir(request: Request, projeto_id: int):
 
 @app.post("/api/gerar")
 async def api_gerar(definicao: ModuloDefinicao):
-    gen = ModuloSEIGenerator()
+    gen       = ModuloSEIGenerator()
     zip_bytes = gen.gerar_modulo(definicao)
-    filename = f"{definicao.slug}_v{definicao.versao}.zip"
+    filename  = f"{definicao.slug}_v{definicao.versao}.zip"
     return StreamingResponse(io.BytesIO(zip_bytes), media_type="application/zip",
                               headers={"Content-Disposition": f"attachment; filename={filename}"})
 
@@ -185,7 +221,6 @@ async def api_validar(definicao: ModuloDefinicao):
 
 @app.post("/api/preview")
 async def api_preview(request: Request):
-    """Retorna dicionário {nome_arquivo: conteudo_renderizado} para preview no passo 4."""
     try:
         payload = {
             **request.session.get("step1", {}),
@@ -196,8 +231,7 @@ async def api_preview(request: Request):
         definicao = ModuloDefinicao(**payload)
     except ValidationError as e:
         return JSONResponse({"error": str(e)}, status_code=422)
-
-    gen = ModuloSEIGenerator()
+    gen     = ModuloSEIGenerator()
     arquivos = gen.renderizar_preview(definicao)
     return JSONResponse(arquivos)
 
