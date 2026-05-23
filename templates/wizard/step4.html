@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Passo 4 — Revisão{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Passo 4 de 4 — Revisão</h1>
+<div class="bg-white rounded border p-4 mb-4 space-y-1 text-sm">
+  <p><strong>Nome:</strong> {{ step1.nome }}</p>
+  <p><strong>Slug:</strong> {{ step1.slug }}</p>
+  <p><strong>Namespace:</strong> {{ step1.namespace }}</p>
+  <p><strong>Versão:</strong> {{ step1.versao }} (SEI mín.: {{ step1.sei_versao_min }})</p>
+  <p><strong>Autor:</strong> {{ step1.autor }}</p>
+  <p><strong>Tabelas:</strong> {{ tabelas|length }}</p>
+  <p><strong>Recursos:</strong> {{ recursos|length }}</p>
+  <p><strong>Menus:</strong> {{ menus|length }}</p>
+</div>
+<form method="POST" action="/gerar" class="flex gap-3">
+  <a href="/wizard/3" class="border px-4 py-2 rounded">← Voltar</a>
+  <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-semibold">⬇ Gerar Módulo (ZIP)</button>
+</form>
+{% endblock %}
