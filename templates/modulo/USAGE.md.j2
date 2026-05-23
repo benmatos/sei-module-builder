@@ -1,0 +1,18 @@
+# Uso — {{ d.nome }}
+
+Após instalação, os seguintes menus estarão disponíveis:
+
+{% for menu in d.menus %}
+- **{{ menu.titulo }}** (`{{ menu.link }}`) — perfil: {{ menu.perfil_requerido }}
+{% endfor %}
+
+## API (opcional)
+
+Geração programática via REST:
+
+```bash
+curl -X POST http://localhost:8000/api/gerar \
+  -H "Content-Type: application/json" \
+  -d @definicao.json \
+  --output {{ d.slug }}_v{{ d.versao }}.zip
+```
