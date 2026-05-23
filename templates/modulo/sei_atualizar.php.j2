@@ -1,0 +1,34 @@
+<?php
+// Script de atualização SEI — {{ d.nome }}
+// Gerado por SEI Module Builder
+
+require_once dirname(dirname(dirname(dirname(__FILE__)))) . "/SEI.php";
+
+try {
+    $objInfraBanco = BancoSEI::getInstance();
+
+    {% for tabela in d.tabelas %}
+    // Tabela: {{ tabela.nome }}
+    if (!$objInfraBanco->tabelaExiste('{{ tabela.nome }}')) {
+        $objInfraBanco->criarTabela('{{ tabela.nome }}', array(
+            {% for col in tabela.colunas %}
+            array(
+                'nome'      => '{{ col.nome }}',
+                'tipo'      => {{ col.tipo | tipo_infrabanco }},
+                'nulo'      => {{ 'false' if col.obrigatorio else 'true' }},
+                {% if col.chave_primaria %}'chave_primaria' => true,{% endif %}
+            ),
+            {% endfor %}
+        ));
+        echo "Tabela {{ tabela.nome }} criada.
+";
+    }
+    {% endfor %}
+
+    echo "Script concluido com sucesso.
+";
+} catch (Exception $e) {
+    echo "ERRO: " . $e->getMessage() . "
+";
+    exit(1);
+}
