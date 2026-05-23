@@ -1,19 +1,99 @@
 {% extends "base.html" %}
 {% block title %}Passo 4 — Revisão{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Passo 4 de 4 — Revisão</h1>
-<div class="bg-white rounded border p-4 mb-4 space-y-1 text-sm">
-  <p><strong>Nome:</strong> {{ step1.nome }}</p>
-  <p><strong>Slug:</strong> {{ step1.slug }}</p>
-  <p><strong>Namespace:</strong> {{ step1.namespace }}</p>
-  <p><strong>Versão:</strong> {{ step1.versao }} (SEI mín.: {{ step1.sei_versao_min }})</p>
-  <p><strong>Autor:</strong> {{ step1.autor }}</p>
-  <p><strong>Tabelas:</strong> {{ tabelas|length }}</p>
-  <p><strong>Recursos:</strong> {{ recursos|length }}</p>
-  <p><strong>Menus:</strong> {{ menus|length }}</p>
+<h1 class="text-2xl font-bold mb-6">Passo 4 de 4 — Revisão e Preview</h1>
+
+<div class="grid grid-cols-2 gap-3 mb-6 text-sm">
+  <div class="bg-white border rounded p-3 col-span-2 sm:col-span-1 space-y-1">
+    <p><span class="text-gray-500">Nome:</span> <strong>{{ step1.nome }}</strong></p>
+    <p><span class="text-gray-500">Slug:</span> <code class="bg-gray-100 px-1 rounded">{{ step1.slug }}</code></p>
+    <p><span class="text-gray-500">Namespace:</span> <code class="bg-gray-100 px-1 rounded">{{ step1.namespace }}</code></p>
+  </div>
+  <div class="bg-white border rounded p-3 space-y-1">
+    <p><span class="text-gray-500">Versão:</span> {{ step1.versao }}</p>
+    <p><span class="text-gray-500">SEI mín.:</span> {{ step1.sei_versao_min }}</p>
+    <p><span class="text-gray-500">Autor:</span> {{ step1.autor }}</p>
+  </div>
+  <div class="bg-white border rounded p-3 flex gap-6">
+    <span><strong class="text-2xl text-blue-700">{{ tabelas|length }}</strong><br/><span class="text-xs text-gray-500">tabelas</span></span>
+    <span><strong class="text-2xl text-blue-700">{{ recursos|length }}</strong><br/><span class="text-xs text-gray-500">recursos</span></span>
+    <span><strong class="text-2xl text-blue-700">{{ menus|length }}</strong><br/><span class="text-xs text-gray-500">menus</span></span>
+  </div>
 </div>
+
+<!-- Preview de código -->
+<div class="mb-6" x-data="previewApp()" x-init="carregar()">
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="font-semibold">Preview de Código</h2>
+    <button @click="carregar()" class="text-xs text-blue-600 hover:underline" :disabled="loading">
+      ↻ Atualizar
+    </button>
+  </div>
+
+  <div x-show="loading" class="bg-white border rounded p-6 text-center text-gray-400 text-sm animate-pulse">
+    Renderizando templates…
+  </div>
+
+  <div x-show="erro" class="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm" x-text="erro"></div>
+
+  <div x-show="!loading && !erro" class="bg-white border rounded overflow-hidden">
+    <!-- Seletor de arquivo -->
+    <div class="border-b bg-gray-50 px-3 py-2 flex gap-1 overflow-x-auto">
+      <template x-for="nome in Object.keys(arquivos)" :key="nome">
+        <button type="button"
+                @click="arqAtivo = nome; destacar()"
+                :class="arqAtivo === nome
+                  ? 'bg-white border border-b-white rounded-t px-3 py-1 text-xs font-medium text-blue-700 -mb-px'
+                  : 'px-3 py-1 text-xs text-gray-500 hover:text-gray-700 rounded-t'"
+                x-text="nome"></button>
+      </template>
+    </div>
+    <!-- Conteúdo com highlight -->
+    <div class="overflow-auto max-h-96">
+      <pre class="m-0"><code id="preview-code"
+        :class="arqAtivo && arqAtivo.endsWith('.php') ? 'language-php' : 'language-markdown'"
+        x-text="arquivos[arqAtivo] || ''"></code></pre>
+    </div>
+  </div>
+</div>
+
 <form method="POST" action="/gerar" class="flex gap-3">
-  <a href="/wizard/3" class="border px-4 py-2 rounded">← Voltar</a>
-  <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-semibold">⬇ Gerar Módulo (ZIP)</button>
+  <a href="/wizard/3" class="border px-4 py-2 rounded text-sm hover:bg-gray-50">← Voltar</a>
+  <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-semibold">
+    ⬇ Gerar Módulo (ZIP)
+  </button>
 </form>
+
+<script>
+function previewApp() {
+  return {
+    arquivos: {},
+    arqAtivo: null,
+    loading: false,
+    erro: null,
+    async carregar() {
+      this.loading = true;
+      this.erro = null;
+      try {
+        const res = await fetch("/api/preview", { method: "POST" });
+        if (!res.ok) throw new Error("Erro " + res.status);
+        this.arquivos = await res.json();
+        const nomes = Object.keys(this.arquivos);
+        if (nomes.length) this.arqAtivo = nomes[0];
+        this.$nextTick(() => this.destacar());
+      } catch(e) {
+        this.erro = "Não foi possível carregar o preview: " + e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    destacar() {
+      this.$nextTick(() => {
+        const el = document.getElementById("preview-code");
+        if (el) { delete el.dataset.highlighted; hljs.highlightElement(el); }
+      });
+    }
+  };
+}
+</script>
 {% endblock %}
