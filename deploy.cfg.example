@@ -1,23 +1,20 @@
 [sei]
-# Endereço do servidor SEI na rede corporativa
-host = sei.exemplo.gov.br
-port = 22
-user = deploy
-# Caminho absoluto para a chave SSH (deixe vazio para usar senha)
-ssh_key = ~/.ssh/id_rsa
+# Caminhos locais do ambiente SEI em desenvolvimento
 
-# Diretório de módulos SEI no servidor
+# Diretório de módulos SEI
 modulos_dir = /var/www/html/sei/web/modulos
 
 # Caminho completo do ConfiguracaoSEI.php
 configuracao_sei = /var/www/html/sei/config/ConfiguracaoSEI.php
 
-# Binário do PHP no servidor
+# Binário do PHP
 php_bin = /usr/bin/php
 
-# Onde guardar backups no servidor
+# Onde guardar backups locais
 backup_dir = /var/backups/sei-modulos
 
-# Usuário/grupo do processo do servidor web (para ajuste de permissões)
-web_user  = apache
-web_group = apache
+# Deploy automático após geração? (true/false)
+auto_deploy = true
+
+# Abrir log detalhado do resultado
+verbose = true
