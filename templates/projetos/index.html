@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Projetos Salvos{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Projetos Salvos</h1>
+  <a href="/wizard/1" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 text-sm">+ Novo Módulo</a>
+</div>
+{% if projetos %}
+<div class="space-y-3">
+  {% for p in projetos %}
+  <div class="bg-white border rounded-lg p-4 shadow-sm flex items-center justify-between">
+    <div>
+      <p class="font-semibold text-gray-800">{{ p.nome }}</p>
+      <p class="text-sm text-gray-500">
+        <code class="bg-gray-100 px-1 rounded">{{ p.slug }}</code>
+        · {{ p.total_geracoes }} geração(ões)
+        · atualizado {{ p.atualizado_em[:10] }}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="/projetos/{{ p.id }}" class="border px-3 py-1 rounded text-sm hover:bg-gray-50">Detalhes</a>
+      <form method="POST" action="/projetos/{{ p.id }}/carregar">
+        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Carregar</button>
+      </form>
+      <form method="POST" action="/projetos/{{ p.id }}/excluir"
+            onsubmit="return confirm('Excluir projeto {{ p.nome }}?')">
+        <button class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200">Excluir</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-16 text-gray-400">
+  <p class="text-4xl mb-3">📂</p>
+  <p>Nenhum projeto salvo ainda.</p>
+  <a href="/wizard/1" class="text-blue-600 underline text-sm">Criar o primeiro módulo</a>
+</div>
+{% endif %}
+{% endblock %}
