@@ -1,0 +1,8 @@
+<?php
+// Trecho a ser incluído em ConfiguracaoSEI.php para ativar o módulo {{ d.nome }}
+// NÃO substitua o arquivo original — apenas inclua este bloco no método inicializarObjInfraModulo()
+
+InfraModulo::adicionarModulo(
+    new {{ ns }}Integracao(),
+    dirname(dirname(__FILE__)) . '/{{ d.slug }}'
+);
