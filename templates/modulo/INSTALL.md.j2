@@ -1,0 +1,10 @@
+# Instalação — {{ d.nome }}
+
+1. Copie a pasta `{{ d.slug }}/` para o diretório `sei/web/modulos/`.
+2. Adicione o trecho de `config/ConfiguracaoSEI.exemplo.php` ao método `inicializarObjInfraModulo()` em `ConfiguracaoSEI.php`.
+3. Execute os scripts de banco:
+   ```bash
+   php sei/web/modulos/{{ d.slug }}/src/scripts/sei_atualizar.php
+   php sei/web/modulos/{{ d.slug }}/src/scripts/sip_atualizar.php
+   ```
+4. Acesse o SEI e verifique se o módulo aparece no menu de administração.
