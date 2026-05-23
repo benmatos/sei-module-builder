@@ -223,6 +223,47 @@ python deploy.py --rollback mod_manifestacao --tag 20260523_143201
 | `DEBUG` | `false` | Ativa reload automático e logs detalhados |
 | `DB_PATH` | `sei_builder.db` | Caminho do banco SQLite |
 
+
+---
+
+## Roadmap
+
+### Concluído ✅
+
+- [x] Wizard 4 passos com validação Pydantic
+- [x] Drag-and-drop para reordenação de tabelas e colunas (SortableJS)
+- [x] Preview de código com syntax highlight antes da geração (highlight.js)
+- [x] Geração de ZIP com estrutura `mod-sei-pen`-compatível
+- [x] Auto-deploy local no SEI de desenvolvimento
+- [x] Backup automático com rollback via CLI
+- [x] Persistência SQLite com histórico de projetos e gerações
+- [x] API REST (`/api/gerar`, `/api/validar`, `/api/preview`)
+
+---
+
+### Próximas evoluções
+
+#### Completar escopo original
+- [ ] Export/import explícito do `ModuloDefinicao` como JSON — compartilhamento entre times e repositórios
+- [ ] Templates para jobs agendados, envio de e-mails e integração SIP avançada
+
+#### Qualidade do código gerado
+- [ ] Geração de testes PHP básicos (unitários para RN, funcionais para controller)
+- [ ] Validação semântica — convenções de nomenclatura SEI, coerência entre alias e tabela, conflito com tabelas nativas do sistema
+
+#### Modelagem visual
+- [ ] Diagrama ER automático a partir das tabelas e FKs definidas
+- [ ] Canvas de modelagem no passo 2 como alternativa ao formulário
+
+#### Deploy e ciclo de vida
+- [ ] Diff entre gerações — exibir o que mudou de v1.0.0 para v1.1.0 antes de deployar
+- [ ] Deploy via SSH para ambientes de homologação e produção
+- [ ] Integração com Git — commit automático do módulo gerado no repositório do projeto
+
+#### Ecossistema
+- [ ] Templates customizáveis pela interface — editar `.php.j2` sem mexer nos arquivos do servidor
+- [ ] Suporte a módulos com dependência entre si (módulo A referencia tabelas do módulo B)
+- [ ] Geração de documentação Markdown/Confluence a partir da definição do módulo
 ---
 
 ## Referências
