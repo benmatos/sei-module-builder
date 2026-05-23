@@ -1,40 +1,109 @@
 {% extends "base.html" %}
 {% block title %}Passo 2 — Tabelas{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Passo 2 de 4 — Estrutura de Dados</h1>
+<h1 class="text-2xl font-bold mb-1">Passo 2 de 4 — Estrutura de Dados</h1>
+<p class="text-sm text-gray-500 mb-6">Arraste as tabelas e colunas para reordenar.</p>
+
 <form method="POST" action="/wizard/2" x-data="tabelasApp()" x-init="init()">
-  <template x-for="(tabela, ti) in tabelas" :key="ti">
-    <div class="border rounded p-4 mb-4 bg-white shadow-sm">
-      <div class="flex gap-2 mb-3">
-        <input x-model="tabela.nome" placeholder="md_nome_tabela" class="border rounded px-2 py-1 flex-1" required/>
-        <input x-model="tabela.alias" placeholder="alias (ex: man)" class="border rounded px-2 py-1 w-28" required/>
-        <button type="button" @click="tabelas.splice(ti,1)" class="text-red-500 font-bold px-2">✕</button>
-      </div>
-      <template x-for="(col, ci) in tabela.colunas" :key="ci">
-        <div class="flex gap-2 mb-2 items-center flex-wrap">
-          <input x-model="col.nome" placeholder="nome_coluna" class="border rounded px-2 py-1 w-40"/>
-          <select x-model="col.tipo" class="border rounded px-2 py-1">
-            <option>varchar(100)</option><option>varchar(255)</option><option>text</option>
-            <option>int</option><option>bigint</option><option>decimal(15,2)</option>
-            <option>date</option><option>datetime</option><option>char(1)</option>
-          </select>
-          <label class="flex items-center gap-1 text-sm"><input type="checkbox" x-model="col.chave_primaria"/> PK</label>
-          <label class="flex items-center gap-1 text-sm"><input type="checkbox" x-model="col.obrigatorio"/> Obrig.</label>
-          <button type="button" @click="tabela.colunas.splice(ci,1)" class="text-red-400 text-sm">✕</button>
+  <div id="sortable-tabelas" class="space-y-4">
+    <template x-for="(tabela, ti) in tabelas" :key="ti">
+      <div class="border rounded-lg bg-white shadow-sm overflow-hidden tabela-item">
+        <!-- Header da tabela -->
+        <div class="bg-gray-50 border-b px-4 py-2 flex items-center gap-2 cursor-grab active:cursor-grabbing">
+          <span class="text-gray-400 select-none">⠿</span>
+          <input x-model="tabela.nome" placeholder="md_nome_tabela"
+                 class="border rounded px-2 py-1 flex-1 text-sm font-mono" required/>
+          <input x-model="tabela.alias" placeholder="alias"
+                 class="border rounded px-2 py-1 w-24 text-sm font-mono" required/>
+          <button type="button" @click="tabelas.splice(ti,1)"
+                  class="text-red-400 hover:text-red-600 px-1 text-lg leading-none">×</button>
         </div>
-      </template>
-      <button type="button" @click="tabela.colunas.push({nome:'',tipo:'varchar(255)',obrigatorio:true,chave_primaria:false,fk:null})"
-              class="text-blue-600 text-sm mt-1">+ Coluna</button>
-    </div>
-  </template>
-  <button type="button" @click="tabelas.push({nome:'md_',alias:'',colunas:[]})" class="bg-gray-200 px-4 py-2 rounded mb-4">+ Tabela</button>
+
+        <!-- Colunas com drag-and-drop interno -->
+        <div class="p-3">
+          <div :id="'sort-cols-' + ti" class="space-y-2 mb-2">
+            <template x-for="(col, ci) in tabela.colunas" :key="ci">
+              <div class="flex gap-2 items-center flex-wrap bg-gray-50 rounded px-2 py-1.5 coluna-item">
+                <span class="text-gray-300 cursor-grab select-none text-sm">⠿</span>
+                <input x-model="col.nome" placeholder="nome_coluna"
+                       class="border rounded px-2 py-1 text-sm w-36"/>
+                <select x-model="col.tipo" class="border rounded px-2 py-1 text-sm">
+                  <option>varchar(100)</option><option>varchar(255)</option>
+                  <option>text</option><option>int</option><option>bigint</option>
+                  <option>decimal(15,2)</option><option>date</option>
+                  <option>datetime</option><option>char(1)</option>
+                </select>
+                <label class="flex items-center gap-1 text-xs text-gray-600">
+                  <input type="checkbox" x-model="col.chave_primaria" class="rounded"/> PK
+                </label>
+                <label class="flex items-center gap-1 text-xs text-gray-600">
+                  <input type="checkbox" x-model="col.obrigatorio" class="rounded"/> Obrig.
+                </label>
+                <button type="button" @click="tabela.colunas.splice(ci,1)"
+                        class="text-red-300 hover:text-red-500 text-sm ml-auto">×</button>
+              </div>
+            </template>
+          </div>
+          <button type="button"
+                  @click="tabela.colunas.push({nome:'',tipo:'varchar(255)',obrigatorio:true,chave_primaria:false,fk:null})"
+                  class="text-blue-600 hover:text-blue-800 text-xs font-medium">+ Coluna</button>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <button type="button"
+          @click="tabelas.push({nome:'md_',alias:'',colunas:[]})"
+          class="mt-4 border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600
+                 rounded-lg px-6 py-3 w-full text-sm transition-colors">
+    + Adicionar Tabela
+  </button>
+
   <input type="hidden" name="tabelas_json" :value="JSON.stringify(tabelas)"/>
-  <div class="flex gap-3">
-    <a href="/wizard/1" class="border px-4 py-2 rounded">← Voltar</a>
-    <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800">Próximo →</button>
+
+  <div class="flex gap-3 mt-6">
+    <a href="/wizard/1" class="border px-4 py-2 rounded text-sm hover:bg-gray-50">← Voltar</a>
+    <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800 text-sm">Próximo →</button>
   </div>
 </form>
+
 <script>
-function tabelasApp(){return{tabelas:[],init(){try{this.tabelas=JSON.parse({{ tabelas_json|tojson }});}catch(e){this.tabelas=[];}}}}
+function tabelasApp() {
+  return {
+    tabelas: [],
+    init() {
+      try { this.tabelas = JSON.parse({{ tabelas_json|tojson }}); } catch(e) { this.tabelas = []; }
+      this.$nextTick(() => this.initSortable());
+    },
+    initSortable() {
+      // Sortable para tabelas
+      const elTabelas = document.getElementById("sortable-tabelas");
+      if (elTabelas) {
+        Sortable.create(elTabelas, {
+          handle: ".tabela-item > .bg-gray-50",
+          animation: 150,
+          onEnd: (evt) => {
+            const moved = this.tabelas.splice(evt.oldIndex, 1)[0];
+            this.tabelas.splice(evt.newIndex, 0, moved);
+          }
+        });
+      }
+      // Sortable para colunas de cada tabela
+      this.tabelas.forEach((_, ti) => {
+        const el = document.getElementById("sort-cols-" + ti);
+        if (el) {
+          Sortable.create(el, {
+            handle: ".coluna-item > span",
+            animation: 100,
+            onEnd: (evt) => {
+              const moved = this.tabelas[ti].colunas.splice(evt.oldIndex, 1)[0];
+              this.tabelas[ti].colunas.splice(evt.newIndex, 0, moved);
+            }
+          });
+        }
+      });
+    }
+  };
+}
 </script>
 {% endblock %}
