@@ -1,0 +1,23 @@
+# {{ d.nome }}
+
+> {{ d.descricao }}
+
+**Versão:** {{ d.versao }}
+**Versão mínima do SEI:** {{ d.sei_versao_min }}
+**Autor:** {{ d.autor }}
+
+## Estrutura
+
+{% for tabela in d.tabelas %}
+- `{{ tabela.nome }}` (alias: `{{ tabela.alias }}`) — {{ tabela.colunas|length }} colunas
+{% endfor %}
+
+## Recursos
+
+{% for recurso in d.recursos %}
+- `{{ recurso.nome }}`: {{ recurso.descricao }}
+{% endfor %}
+
+## Instalação
+
+Veja [INSTALL.md](INSTALL.md).
