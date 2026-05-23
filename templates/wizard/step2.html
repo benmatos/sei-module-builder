@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Passo 2 — Tabelas{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Passo 2 de 4 — Estrutura de Dados</h1>
+<form method="POST" action="/wizard/2" x-data="tabelasApp()" x-init="init()">
+  <template x-for="(tabela, ti) in tabelas" :key="ti">
+    <div class="border rounded p-4 mb-4 bg-white shadow-sm">
+      <div class="flex gap-2 mb-3">
+        <input x-model="tabela.nome" placeholder="md_nome_tabela" class="border rounded px-2 py-1 flex-1" required/>
+        <input x-model="tabela.alias" placeholder="alias (ex: man)" class="border rounded px-2 py-1 w-28" required/>
+        <button type="button" @click="tabelas.splice(ti,1)" class="text-red-500 font-bold px-2">✕</button>
+      </div>
+      <template x-for="(col, ci) in tabela.colunas" :key="ci">
+        <div class="flex gap-2 mb-2 items-center flex-wrap">
+          <input x-model="col.nome" placeholder="nome_coluna" class="border rounded px-2 py-1 w-40"/>
+          <select x-model="col.tipo" class="border rounded px-2 py-1">
+            <option>varchar(100)</option><option>varchar(255)</option><option>text</option>
+            <option>int</option><option>bigint</option><option>decimal(15,2)</option>
+            <option>date</option><option>datetime</option><option>char(1)</option>
+          </select>
+          <label class="flex items-center gap-1 text-sm"><input type="checkbox" x-model="col.chave_primaria"/> PK</label>
+          <label class="flex items-center gap-1 text-sm"><input type="checkbox" x-model="col.obrigatorio"/> Obrig.</label>
+          <button type="button" @click="tabela.colunas.splice(ci,1)" class="text-red-400 text-sm">✕</button>
+        </div>
+      </template>
+      <button type="button" @click="tabela.colunas.push({nome:'',tipo:'varchar(255)',obrigatorio:true,chave_primaria:false,fk:null})"
+              class="text-blue-600 text-sm mt-1">+ Coluna</button>
+    </div>
+  </template>
+  <button type="button" @click="tabelas.push({nome:'md_',alias:'',colunas:[]})" class="bg-gray-200 px-4 py-2 rounded mb-4">+ Tabela</button>
+  <input type="hidden" name="tabelas_json" :value="JSON.stringify(tabelas)"/>
+  <div class="flex gap-3">
+    <a href="/wizard/1" class="border px-4 py-2 rounded">← Voltar</a>
+    <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800">Próximo →</button>
+  </div>
+</form>
+<script>
+function tabelasApp(){return{tabelas:[],init(){try{this.tabelas=JSON.parse({{ tabelas_json|tojson }});}catch(e){this.tabelas=[];}}}}
+</script>
+{% endblock %}
