@@ -3,7 +3,7 @@
 {% block content %}
 <h1 class="text-2xl font-bold mb-6">Passo 4 de 4 — Revisão e Preview</h1>
 
-<div class="grid grid-cols-2 gap-3 mb-6 text-sm">
+<div class="grid grid-cols-2 gap-3 mb-4 text-sm">
   <div class="bg-white border rounded p-3 col-span-2 sm:col-span-1 space-y-1">
     <p><span class="text-gray-500">Nome:</span> <strong>{{ step1.nome }}</strong></p>
     <p><span class="text-gray-500">Slug:</span> <code class="bg-gray-100 px-1 rounded">{{ step1.slug }}</code></p>
@@ -21,36 +21,39 @@
   </div>
 </div>
 
+<!-- Status do auto-deploy -->
+{% if deploy_ativo %}
+<div class="bg-blue-50 border border-blue-200 rounded p-3 mb-4 text-sm text-blue-800 flex items-center gap-2">
+  <span>🚀</span>
+  <span>Auto-deploy ativo — o módulo será instalado em <strong>{{ step1.slug }}</strong> automaticamente após a geração.</span>
+</div>
+{% elif deploy_aviso %}
+<div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4 text-sm text-yellow-800 flex items-center gap-2">
+  <span>⚠</span>
+  <span>Deploy não configurado ({{ deploy_aviso }}) — somente o ZIP será gerado para download.</span>
+</div>
+{% endif %}
+
 <!-- Preview de código -->
 <div class="mb-6" x-data="previewApp()" x-init="carregar()">
   <div class="flex items-center justify-between mb-2">
-    <h2 class="font-semibold">Preview de Código</h2>
-    <button @click="carregar()" class="text-xs text-blue-600 hover:underline" :disabled="loading">
-      ↻ Atualizar
-    </button>
+    <h2 class="font-semibold text-sm">Preview de Código</h2>
+    <button @click="carregar()" class="text-xs text-blue-600 hover:underline" :disabled="loading">↻ Atualizar</button>
   </div>
-
-  <div x-show="loading" class="bg-white border rounded p-6 text-center text-gray-400 text-sm animate-pulse">
-    Renderizando templates…
-  </div>
-
-  <div x-show="erro" class="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm" x-text="erro"></div>
-
+  <div x-show="loading" class="bg-white border rounded p-4 text-center text-gray-400 text-xs animate-pulse">Renderizando templates…</div>
+  <div x-show="erro" class="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-xs" x-text="erro"></div>
   <div x-show="!loading && !erro" class="bg-white border rounded overflow-hidden">
-    <!-- Seletor de arquivo -->
-    <div class="border-b bg-gray-50 px-3 py-2 flex gap-1 overflow-x-auto">
+    <div class="border-b bg-gray-50 px-3 py-1.5 flex gap-1 overflow-x-auto">
       <template x-for="nome in Object.keys(arquivos)" :key="nome">
-        <button type="button"
-                @click="arqAtivo = nome; destacar()"
+        <button type="button" @click="arqAtivo = nome; destacar()"
                 :class="arqAtivo === nome
-                  ? 'bg-white border border-b-white rounded-t px-3 py-1 text-xs font-medium text-blue-700 -mb-px'
-                  : 'px-3 py-1 text-xs text-gray-500 hover:text-gray-700 rounded-t'"
+                  ? 'bg-white border border-b-white rounded-t px-2 py-1 text-xs font-medium text-blue-700 -mb-px'
+                  : 'px-2 py-1 text-xs text-gray-500 hover:text-gray-700'"
                 x-text="nome"></button>
       </template>
     </div>
-    <!-- Conteúdo com highlight -->
-    <div class="overflow-auto max-h-96">
-      <pre class="m-0"><code id="preview-code"
+    <div class="overflow-auto max-h-80">
+      <pre class="m-0 text-xs"><code id="preview-code"
         :class="arqAtivo && arqAtivo.endsWith('.php') ? 'language-php' : 'language-markdown'"
         x-text="arquivos[arqAtivo] || ''"></code></pre>
     </div>
@@ -59,21 +62,18 @@
 
 <form method="POST" action="/gerar" class="flex gap-3">
   <a href="/wizard/3" class="border px-4 py-2 rounded text-sm hover:bg-gray-50">← Voltar</a>
-  <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-semibold">
-    ⬇ Gerar Módulo (ZIP)
+  <button type="submit"
+          class="{% if deploy_ativo %}bg-blue-700 hover:bg-blue-800{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white px-6 py-2 rounded font-semibold text-sm">
+    {% if deploy_ativo %}🚀 Gerar e Deployar{% else %}⬇ Gerar Módulo (ZIP){% endif %}
   </button>
 </form>
 
 <script>
 function previewApp() {
   return {
-    arquivos: {},
-    arqAtivo: null,
-    loading: false,
-    erro: null,
+    arquivos: {}, arqAtivo: null, loading: false, erro: null,
     async carregar() {
-      this.loading = true;
-      this.erro = null;
+      this.loading = true; this.erro = null;
       try {
         const res = await fetch("/api/preview", { method: "POST" });
         if (!res.ok) throw new Error("Erro " + res.status);
@@ -81,11 +81,8 @@ function previewApp() {
         const nomes = Object.keys(this.arquivos);
         if (nomes.length) this.arqAtivo = nomes[0];
         this.$nextTick(() => this.destacar());
-      } catch(e) {
-        this.erro = "Não foi possível carregar o preview: " + e.message;
-      } finally {
-        this.loading = false;
-      }
+      } catch(e) { this.erro = "Preview indisponível: " + e.message; }
+      finally { this.loading = false; }
     },
     destacar() {
       this.$nextTick(() => {
