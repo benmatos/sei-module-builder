@@ -1,0 +1,15 @@
+<?php /* View: cadastrar {{ tabela.nome }} */ ?>
+<h2>Cadastrar — {{ tabela.nome }}</h2>
+<form method="POST">
+  {% for col in tabela.colunas %}
+  {% if not col.chave_primaria %}
+  <div>
+    <label>{{ col.nome | pascalcase }}:</label>
+    <input type="text" name="{{ col.nome | pascalcase }}"
+           value="<?php echo htmlspecialchars($obj{{ tnome }}->get{{ col.nome | pascalcase }}() ?? ''); ?>"
+           {% if col.obrigatorio %}required{% endif %}/>
+  </div>
+  {% endif %}
+  {% endfor %}
+  <button type="submit">Salvar</button>
+</form>
