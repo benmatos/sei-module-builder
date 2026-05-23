@@ -6,12 +6,20 @@
   <title>{% block title %}SEI Module Builder{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/static/alpine.min.js" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <nav class="bg-blue-800 text-white px-6 py-3 shadow">
-    <span class="font-bold text-lg">SEI Module Builder</span>
+  <nav class="bg-blue-800 text-white px-6 py-3 shadow flex items-center justify-between">
+    <a href="/" class="font-bold text-lg tracking-tight">SEI Module Builder</a>
+    <div class="flex gap-4 text-sm">
+      <a href="/wizard/1" class="hover:text-blue-200">Novo Módulo</a>
+      <a href="/projetos" class="hover:text-blue-200">Projetos Salvos</a>
+    </div>
   </nav>
-  <main class="max-w-3xl mx-auto py-8 px-4">
+  <main class="max-w-4xl mx-auto py-8 px-4">
     {% for f in flashes %}
     <div class="mb-4 p-3 rounded {% if f.cat == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
       {{ f.msg }}
