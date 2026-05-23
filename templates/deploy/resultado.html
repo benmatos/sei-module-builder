@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Resultado do Deploy{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+  <h1 class="text-2xl font-bold">
+    {% if r.sucesso %}
+      <span class="text-green-600">✔ Deploy concluído</span>
+    {% else %}
+      <span class="text-red-600">✘ Deploy falhou</span>
+    {% endif %}
+  </h1>
+  <code class="bg-gray-100 text-sm px-2 py-0.5 rounded">{{ r.slug }} v{{ r.versao }}</code>
+</div>
+
+<!-- Etapas -->
+<div class="bg-white border rounded-lg overflow-hidden mb-6">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b">
+      <tr>
+        <th class="text-left px-4 py-2 w-6"></th>
+        <th class="text-left px-4 py-2">Etapa</th>
+        <th class="text-left px-4 py-2 text-gray-500">Detalhe</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for etapa in r.etapas %}
+      <tr class="border-t {% if not etapa.ok %}bg-red-50{% endif %}">
+        <td class="px-4 py-2 text-center">
+          {% if etapa.ok %}
+            <span class="text-green-500 font-bold">✔</span>
+          {% else %}
+            <span class="text-red-500 font-bold">✘</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 font-medium">{{ etapa.nome }}</td>
+        <td class="px-4 py-2 text-gray-500 font-mono text-xs whitespace-pre-wrap">{{ etapa.detalhe }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Erros -->
+{% if r.erros %}
+<div class="bg-red-50 border border-red-200 rounded p-4 mb-6 text-sm text-red-800 space-y-1">
+  {% for e in r.erros %}<p>{{ e }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<!-- Rodapé com ações -->
+<div class="flex gap-3 items-center text-sm">
+  <a href="/wizard/1" class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800">Novo Módulo</a>
+  <a href="/projetos" class="border px-5 py-2 rounded hover:bg-gray-50">Projetos Salvos</a>
+  {% if r.sucesso and r.backup_tag %}
+  <span class="text-gray-400 ml-auto">
+    Rollback:
+    <code class="bg-gray-100 px-1 rounded">python deploy.py --rollback {{ r.slug }} --tag {{ r.backup_tag }}</code>
+  </span>
+  {% endif %}
+</div>
+{% endblock %}
