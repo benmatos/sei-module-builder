@@ -1,0 +1,41 @@
+<?php
+// RN: {{ tabela.nome }} — Gerado por SEI Module Builder
+
+class {{ ns }}{{ tnome }}RN extends InfraRN {
+
+    private $objInfraRN;
+
+    public function __construct() {
+        $this->objInfraRN = new InfraRN();
+    }
+
+    public function listar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        $this->objInfraRN->listar($obj{{ tnome }}DTO);
+        return $obj{{ tnome }}DTO;
+    }
+
+    public function consultar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        $this->objInfraRN->consultar($obj{{ tnome }}DTO);
+        return $obj{{ tnome }}DTO;
+    }
+
+    public function cadastrar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        $this->validar($obj{{ tnome }}DTO);
+        $this->objInfraRN->incluir($obj{{ tnome }}DTO);
+        return $obj{{ tnome }}DTO;
+    }
+
+    public function alterar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        $this->validar($obj{{ tnome }}DTO);
+        $this->objInfraRN->alterar($obj{{ tnome }}DTO);
+        return $obj{{ tnome }}DTO;
+    }
+
+    public function excluir({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        $this->objInfraRN->excluir($obj{{ tnome }}DTO);
+    }
+
+    private function validar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        // TODO: adicionar regras de negócio
+    }
+}
