@@ -1,0 +1,32 @@
+<?php
+// {{ d.nome }} — Integração
+// Gerado por SEI Module Builder v{{ d.versao }}
+
+class {{ ns }}Integracao extends InfraIntegracao {
+
+    public function getNome() { return '{{ d.nome }}'; }
+    public function getDescricao() { return '{{ d.descricao }}'; }
+    public function getVersao() { return '{{ d.versao }}'; }
+    public function getVersaoSEIRequerida() { return '{{ d.sei_versao_min }}'; }
+
+    public function getMenus() {
+        $arrMenus = array();
+        {% for menu in d.menus %}
+        $arrMenus[] = array(
+            'titulo'            => '{{ menu.titulo }}',
+            'link'              => '{{ menu.link }}',
+            'icone'             => '{{ menu.icone }}',
+            'perfil_requerido'  => '{{ menu.perfil_requerido }}',
+        );
+        {% endfor %}
+        return $arrMenus;
+    }
+
+    public function getRecursos() {
+        return array(
+            {% for recurso in d.recursos %}
+            array('nome' => '{{ recurso.nome }}', 'descricao' => '{{ recurso.descricao }}'),
+            {% endfor %}
+        );
+    }
+}
