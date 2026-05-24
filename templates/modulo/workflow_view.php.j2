@@ -1,0 +1,54 @@
+<?php /* View: workflow/aprovação — {{ tabela.nome }} */ ?>
+<div class="infraAreaDados">
+  <h3>Tramitação — {{ d.nome }}</h3>
+  <table class="infraTable">
+    <thead>
+      <tr>
+        <th>Data/Hora</th>
+        <th>Estado</th>
+        <th>Usuário</th>
+        <th>Parecer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php foreach ($arrHistorico as $item): ?>
+      <tr>
+        <td><?php echo htmlspecialchars($item['DtaAcao'] ?? ''); ?></td>
+        <td><?php
+          $map = [
+            'R' => '<span style="color:#666">Rascunho</span>',
+            'P' => '<span style="color:#b45309">Pendente</span>',
+            'A' => '<span style="color:#166534">Aprovado</span>',
+            'J' => '<span style="color:#991b1b">Rejeitado</span>',
+          ];
+          echo $map[$item['StrEstado']] ?? htmlspecialchars($item['StrEstado']);
+        ?></td>
+        <td><?php echo htmlspecialchars($item['StrNomeUsuario'] ?? ''); ?></td>
+        <td><?php echo htmlspecialchars($item['StrParecer'] ?? '—'); ?></td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+
+  <?php if ($strEstadoAtual === 'P' && $bolPodeAprovar): ?>
+  <div style="margin-top:16px; padding:12px; border:1px solid #ddd; border-radius:4px; background:#f9f9f9">
+    <form method="POST">
+      <label class="infraLabel">Parecer <span style="color:red">*</span></label>
+      <textarea name="StrParecer" class="infraTextArea" rows="3" style="width:100%; margin:6px 0" required></textarea>
+      <input type="hidden" name="IdRegistro" value="<?php echo $idRegistro; ?>"/>
+      <button type="submit" name="acao" value="aprovar" class="infraButton">✔ Aprovar</button>
+      <button type="submit" name="acao" value="rejeitar" class="infraButton"
+              style="margin-left:8px; background:#c62828; color:#fff"
+              onclick="return confirm('Confirmar rejeição?')">✘ Rejeitar</button>
+    </form>
+  </div>
+  <?php endif; ?>
+
+  <?php if ($strEstadoAtual === 'R'): ?>
+  <form method="POST" style="margin-top:12px">
+    <input type="hidden" name="acao" value="submeter"/>
+    <input type="hidden" name="IdRegistro" value="<?php echo $idRegistro; ?>"/>
+    <button type="submit" class="infraButton">Submeter para Aprovação →</button>
+  </form>
+  <?php endif; ?>
+</div>

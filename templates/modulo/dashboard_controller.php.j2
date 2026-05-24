@@ -1,0 +1,34 @@
+<?php
+// DashboardController — {{ d.nome }}
+// Gerado por SEI Module Builder (template: dashboard)
+
+class {{ ns }}DashboardController extends InfraController {
+
+    public function dashboard() {
+        InfraHtml::exibirTemplate(
+            '{{ d.slug }}/{{ d.slug }}_dashboard',
+            ['arrStats' => $this->coletarEstatisticas()]
+        );
+    }
+
+    private function coletarEstatisticas() {
+        $stats = [];
+        {% for tabela in d.tabelas %}
+        // Totais — {{ tabela.nome }}
+        $obj{{ tabela.nome | pascalcase }}DTO = new {{ ns }}{{ tabela.nome | pascalcase }}DTO();
+        (new {{ ns }}{{ tabela.nome | pascalcase }}RN())->listar($obj{{ tabela.nome | pascalcase }}DTO);
+        $stats['total_{{ tabela.nome }}'] = count($obj{{ tabela.nome | pascalcase }}DTO->toArray());
+
+        {% for col in tabela.colunas %}
+        {% if col.tipo == 'char(1)' and not col.chave_primaria %}
+        // Distribuição por {{ col.nome }}
+        $objDist_{{ col.nome }} = new {{ ns }}{{ tabela.nome | pascalcase }}DTO();
+        $objDist_{{ col.nome }}->setStrAgrupamento('{{ tabela.alias }}.{{ col.nome }}');
+        (new {{ ns }}{{ tabela.nome | pascalcase }}RN())->listar($objDist_{{ col.nome }});
+        $stats['dist_{{ tabela.nome }}_{{ col.nome }}'] = $objDist_{{ col.nome }}->toArray();
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+        return $stats;
+    }
+}

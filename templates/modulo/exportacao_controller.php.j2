@@ -1,0 +1,59 @@
+<?php
+// ExportacaoController — {{ d.nome }}
+// Gerado por SEI Module Builder (template: exportacao)
+
+class {{ ns }}ExportacaoController extends InfraController {
+
+    public function exportarExcel() {
+        $this->exportar(InfraRelatorio::FORMATO_EXCEL);
+    }
+
+    public function exportarPdf() {
+        $this->exportar(InfraRelatorio::FORMATO_PDF);
+    }
+
+    private function exportar($strFormato) {
+        $objDTO = $this->montarFiltros();
+        (new {{ ns }}{{ tnome }}RN())->listar($objDTO);
+
+        $objRelatorio = new InfraRelatorio();
+        $objRelatorio->setStrTitulo('{{ d.nome }}');
+        $objRelatorio->setStrNomeArquivo('{{ d.slug }}_{{ tabela.nome }}');
+        $objRelatorio->setStrFormato($strFormato);
+
+        if ($strFormato === InfraRelatorio::FORMATO_PDF) {
+            $objRelatorio->setStrOrientacao(InfraRelatorio::ORIENTACAO_PAISAGEM);
+        }
+
+        $objRelatorio->adicionarCabecalho([
+            {% for col in tabela.colunas %}{% if not col.chave_primaria %}
+            '{{ col.nome | pascalcase }}',
+            {% endif %}{% endfor %}
+        ]);
+
+        foreach ($objDTO->toArray() as $linha) {
+            $objRelatorio->adicionarLinha([
+                {% for col in tabela.colunas %}{% if not col.chave_primaria %}
+                $linha['{{ col.nome | pascalcase }}'] ?? '',
+                {% endif %}{% endfor %}
+            ]);
+        }
+
+        $objRelatorio->gerar();
+    }
+
+    private function montarFiltros() {
+        $objDTO = new {{ ns }}{{ tnome }}DTO();
+        {% for col in tabela.colunas %}
+        {% if 'date' in col.tipo %}
+        if ($deDe = InfraHtml::getParameter('{{ col.nome | pascalcase }}De')) {
+            $objDTO->set{{ col.nome | pascalcase }}Inicial($deDe);
+        }
+        if ($ate = InfraHtml::getParameter('{{ col.nome | pascalcase }}Ate')) {
+            $objDTO->set{{ col.nome | pascalcase }}Final($ate);
+        }
+        {% endif %}
+        {% endfor %}
+        return $objDTO;
+    }
+}

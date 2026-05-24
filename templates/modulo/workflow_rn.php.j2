@@ -1,0 +1,67 @@
+<?php
+// WorkflowRN — {{ d.nome }}
+// Gerado por SEI Module Builder (template: workflow)
+
+class {{ ns }}WorkflowRN extends InfraRN {
+
+    const ESTADO_RASCUNHO  = 'R';
+    const ESTADO_PENDENTE  = 'P';
+    const ESTADO_APROVADO  = 'A';
+    const ESTADO_REJEITADO = 'J';
+
+    private static $transicoes = [
+        self::ESTADO_RASCUNHO  => [self::ESTADO_PENDENTE],
+        self::ESTADO_PENDENTE  => [self::ESTADO_APROVADO, self::ESTADO_REJEITADO],
+        self::ESTADO_APROVADO  => [],
+        self::ESTADO_REJEITADO => [self::ESTADO_RASCUNHO],
+    ];
+
+    public function submeter({{ ns }}{{ tnome }}DTO $objDTO, $idUsuario) {
+        $this->validarTransicao($objDTO->getStrEstado(), self::ESTADO_PENDENTE);
+        $objDTO->setStrEstado(self::ESTADO_PENDENTE);
+        (new {{ ns }}{{ tnome }}RN())->alterar($objDTO);
+        $this->registrarHistorico($objDTO->getId(), self::ESTADO_PENDENTE, $idUsuario, '');
+    }
+
+    public function aprovar({{ ns }}{{ tnome }}DTO $objDTO, $idUsuario, $strParecer) {
+        $this->validarTransicao($objDTO->getStrEstado(), self::ESTADO_APROVADO);
+        InfraException::lancaValidacao('Parecer é obrigatório para aprovação.', empty(trim($strParecer)));
+        $objDTO->setStrEstado(self::ESTADO_APROVADO);
+        (new {{ ns }}{{ tnome }}RN())->alterar($objDTO);
+        $this->registrarHistorico($objDTO->getId(), self::ESTADO_APROVADO, $idUsuario, $strParecer);
+    }
+
+    public function rejeitar({{ ns }}{{ tnome }}DTO $objDTO, $idUsuario, $strParecer) {
+        $this->validarTransicao($objDTO->getStrEstado(), self::ESTADO_REJEITADO);
+        InfraException::lancaValidacao('Parecer é obrigatório para rejeição.', empty(trim($strParecer)));
+        $objDTO->setStrEstado(self::ESTADO_REJEITADO);
+        (new {{ ns }}{{ tnome }}RN())->alterar($objDTO);
+        $this->registrarHistorico($objDTO->getId(), self::ESTADO_REJEITADO, $idUsuario, $strParecer);
+    }
+
+    public function listarHistorico($idRegistro) {
+        $objHistDTO = new {{ ns }}WorkflowHistoricoDTO();
+        $objHistDTO->setNumIdRegistro($idRegistro);
+        $objHistDTO->setStrOrdenacao('dta_acao');
+        (new InfraRN())->listar($objHistDTO);
+        return $objHistDTO;
+    }
+
+    private function validarTransicao($estadoAtual, $estadoDestino) {
+        $permitidos = self::$transicoes[$estadoAtual] ?? [];
+        InfraException::lancaValidacao(
+            "Transição de '{$estadoAtual}' para '{$estadoDestino}' não permitida.",
+            !in_array($estadoDestino, $permitidos)
+        );
+    }
+
+    private function registrarHistorico($idRegistro, $strEstado, $idUsuario, $strParecer) {
+        $objHistDTO = new {{ ns }}WorkflowHistoricoDTO();
+        $objHistDTO->setNumIdRegistro($idRegistro);
+        $objHistDTO->setStrEstado($strEstado);
+        $objHistDTO->setNumIdUsuario($idUsuario);
+        $objHistDTO->setStrParecer($strParecer);
+        $objHistDTO->setDtaAcao(InfraData::getStrDataHoraAtual());
+        (new InfraRN())->incluir($objHistDTO);
+    }
+}

@@ -1,0 +1,28 @@
+<?php /* View: exportação — {{ tabela.nome }} */ ?>
+<div class="infraAreaDados">
+  <h3>Exportar Relatório — {{ d.nome }}</h3>
+  <form method="POST">
+    <table class="infraTable" style="width:auto">
+      <tbody>
+        {% for col in tabela.colunas %}
+        {% if 'date' in col.tipo %}
+        <tr>
+          <td class="infraTd" style="font-weight:bold">{{ col.nome | pascalcase }}</td>
+          <td class="infraTd">De:&nbsp;<input type="date" name="{{ col.nome | pascalcase }}De" class="infraText"/></td>
+          <td class="infraTd">Até:&nbsp;<input type="date" name="{{ col.nome | pascalcase }}Ate" class="infraText"/></td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top:12px; display:flex; gap:8px">
+      <button type="submit" formaction="?acao=exportarExcel" class="infraButton">
+        📊 Exportar Excel
+      </button>
+      <button type="submit" formaction="?acao=exportarPdf" class="infraButton">
+        📄 Exportar PDF
+      </button>
+      <a href="?acao=listar" class="infraButton" style="background:#666">← Voltar</a>
+    </div>
+  </form>
+</div>
