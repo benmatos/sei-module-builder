@@ -2,22 +2,76 @@
 {% block title %}Passo 1 — Metadados{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold mb-6">Passo 1 de 4 — Metadados do Módulo</h1>
+
 <form method="POST" action="/wizard/1" class="space-y-4">
   {% for field, label, placeholder in [
-    ("nome","Nome do Módulo","Módulo de Manifestação"),
-    ("slug","Slug","mod_manifestacao"),
-    ("namespace","Namespace PHP","ModManifestacao"),
-    ("descricao","Descrição","Gerencia manifestações de usuários"),
-    ("versao","Versão","1.0.0"),
-    ("sei_versao_min","Versão mínima do SEI","3.1.0"),
-    ("autor","Autor","Nome / Equipe")
+    ("nome",          "Nome do Módulo",          "Módulo de Manifestação"),
+    ("slug",          "Slug",                    "mod_manifestacao"),
+    ("namespace",     "Namespace PHP",           "ModManifestacao"),
+    ("descricao",     "Descrição",               "Gerencia manifestações de usuários"),
+    ("versao",        "Versão",                  "1.0.0"),
+    ("sei_versao_min","Versão mínima do SEI",    "3.1.0"),
+    ("autor",         "Autor",                   "Nome / Equipe")
   ] %}
   <div>
     <label class="block text-sm font-medium text-gray-700 mb-1">{{ label }}</label>
-    <input type="text" name="{{ field }}" value="{{ data.get(field, '') }}" placeholder="{{ placeholder }}"
-           class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required/>
+    <input type="text" name="{{ field }}" value="{{ data.get(field, '') }}"
+           placeholder="{{ placeholder }}"
+           class="w-full border border-gray-300 rounded px-3 py-2 text-sm
+                  focus:outline-none focus:ring-2 focus:ring-blue-500" required/>
   </div>
   {% endfor %}
-  <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800">Próximo →</button>
+
+  <!-- Templates opcionais -->
+  <div class="pt-2">
+    <p class="text-sm font-medium text-gray-700 mb-3">Templates opcionais</p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer hover:border-blue-400
+                    has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-colors">
+        <input type="checkbox" name="extras" value="workflow" class="mt-0.5 rounded"
+               {{ 'checked' if 'workflow' in data.get('extras', []) }}/>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Workflow</p>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Aprovação multi-etapa com estados Rascunho → Pendente → Aprovado/Rejeitado,
+            parecer obrigatório e histórico de tramitação.
+          </p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer hover:border-blue-400
+                    has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-colors">
+        <input type="checkbox" name="extras" value="exportacao" class="mt-0.5 rounded"
+               {{ 'checked' if 'exportacao' in data.get('extras', []) }}/>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Exportação</p>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Controller e view para relatórios em Excel e PDF com filtros
+            por período via InfraRelatorio.
+          </p>
+        </div>
+      </label>
+
+      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer hover:border-blue-400
+                    has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-colors">
+        <input type="checkbox" name="extras" value="dashboard" class="mt-0.5 rounded"
+               {{ 'checked' if 'dashboard' in data.get('extras', []) }}/>
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Dashboard</p>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Cards de totais e gráficos doughnut (Chart.js) para colunas
+            <code class="bg-gray-100 px-0.5 rounded">char(1)</code> de status/tipo.
+          </p>
+        </div>
+      </label>
+
+    </div>
+  </div>
+
+  <button type="submit"
+          class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800 text-sm font-medium">
+    Próximo →
+  </button>
 </form>
 {% endblock %}
