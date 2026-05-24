@@ -1,6 +1,6 @@
 from __future__ import annotations
 import re
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional
 from pydantic import BaseModel, field_validator, model_validator
 
 
@@ -32,7 +32,7 @@ class TabelaDTO(BaseModel):
     @classmethod
     def nome_deve_comecar_com_md(cls, v: str) -> str:
         if not v.startswith("md_"):
-            raise ValueError(f"Nome de tabela deve comecar com md_: {v}")
+            raise ValueError(f"Nome de tabela deve começar com 'md_': {v}")
         return v
 
 
@@ -59,26 +59,27 @@ class ModuloDefinicao(BaseModel):
     tabelas: List[TabelaDTO]
     recursos: List[RecursoDTO]
     menus: List[MenuDTO]
+    extras: List[Literal["workflow", "exportacao", "dashboard"]] = []
 
     @field_validator("slug")
     @classmethod
     def slug_valido(cls, v: str) -> str:
         if not re.match(r"^[a-z][a-z0-9_]+$", v):
-            raise ValueError("Slug deve ser alfanumerico com underscores")
+            raise ValueError("Slug deve ser alfanumérico com underscores")
         return v
 
     @field_validator("versao", "sei_versao_min")
     @classmethod
     def versao_semver(cls, v: str) -> str:
         if not re.match(r"^[0-9]+[.][0-9]+[.][0-9]+$", v):
-            raise ValueError(f"Versao deve seguir semver (ex: 1.0.0): {v}")
+            raise ValueError(f"Versão deve seguir semver (ex: 1.0.0): {v}")
         return v
 
     @model_validator(mode="after")
     def validar_aliases_unicos(self) -> "ModuloDefinicao":
         aliases = [t.alias for t in self.tabelas]
         if len(aliases) != len(set(aliases)):
-            raise ValueError("Aliases de tabela devem ser unicos")
+            raise ValueError("Aliases de tabela devem ser únicos")
         return self
 
     @model_validator(mode="after")
@@ -93,6 +94,6 @@ class ModuloDefinicao(BaseModel):
                         continue
                     if slug_ref not in slugs_conhecidos and slug_ref not in tabelas_sei_nativas:
                         raise ValueError(
-                            f"FK em {tabela.nome}.{col.nome} referencia tabela nao declarada: {slug_ref}"
+                            f"FK em {tabela.nome}.{col.nome} referencia tabela não declarada: {slug_ref}"
                         )
         return self
