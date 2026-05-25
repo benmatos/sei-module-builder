@@ -3,13 +3,13 @@ import io, zipfile, os
 from models import ModuloDefinicao
 from utils import get_jinja_env, to_pascal_case
 
-TEMPLATES_DIR       = os.path.join(os.path.dirname(__file__), "templates", "modulo")
+TEMPLATES_DIR        = os.path.join(os.path.dirname(__file__), "templates", "modulo")
 EXTRAS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "extras")
 
 class ModuloSEIGenerator:
     def __init__(self):
-        self.env        = get_jinja_env(TEMPLATES_DIR)
-        self.env_extras = get_jinja_env(EXTRAS_TEMPLATES_DIR)
+        self.env         = get_jinja_env(TEMPLATES_DIR)
+        self.env_extras  = get_jinja_env(EXTRAS_TEMPLATES_DIR)
         self.ultimo_arquivo_count: list[str] = []
 
     def gerar_modulo(self, definicao: ModuloDefinicao) -> bytes:
@@ -30,7 +30,7 @@ class ModuloSEIGenerator:
         return buf.read()
 
     def renderizar_preview(self, definicao: ModuloDefinicao) -> dict[str, str]:
-        ns  = to_pascal_case(definicao.namespace)
+        ns = to_pascal_case(definicao.namespace)
         resultado: dict[str, str] = {}
         resultado[f"{ns}Integracao.php"] = self._render("integracao.php.j2", d=definicao, ns=ns)
         for t in definicao.tabelas:
@@ -38,16 +38,13 @@ class ModuloSEIGenerator:
             resultado[f"{ns}{tn}DTO.php"]        = self._render("dto.php.j2",        d=definicao, ns=ns, tabela=t, tnome=tn)
             resultado[f"{ns}{tn}RN.php"]         = self._render("rn.php.j2",         d=definicao, ns=ns, tabela=t, tnome=tn)
             resultado[f"{ns}{tn}Controller.php"] = self._render("controller.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
-            resultado[f"{definicao.slug}_{t.nome}_listar.php"]    = self._render("view_listar.php.j2",    d=definicao, ns=ns, tabela=t, tnome=tn)
-            resultado[f"{definicao.slug}_{t.nome}_cadastrar.php"] = self._render("view_cadastrar.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
         resultado["sei_atualizar.php"]           = self._render("sei_atualizar.php.j2",    d=definicao)
         resultado["ConfiguracaoSEI.exemplo.php"] = self._render("configuracao_sei.php.j2", d=definicao, ns=ns)
-        resultado["README.md"]                   = self._render("README.md.j2",  d=definicao)
-        # Extras no preview
+        resultado["README.md"]                   = self._render("README.md.j2", d=definicao)
         if definicao.extras:
             t0  = definicao.tabelas[0] if definicao.tabelas else None
             tn0 = to_pascal_case(t0.nome) if t0 else "Tabela"
-            for extra, tmpl, label in self._extra_templates(definicao, t0, tn0, ns):
+            for _, tmpl, label in self._extra_templates(definicao, t0, tn0, ns):
                 try:
                     resultado[label] = self.env_extras.get_template(tmpl).render(
                         d=definicao, ns=ns, tabela=t0, tnome=tn0
@@ -62,18 +59,16 @@ class ModuloSEIGenerator:
         ns  = to_pascal_case(d.namespace)
         t0  = d.tabelas[0] if d.tabelas else None
         tn0 = to_pascal_case(t0.nome) if t0 else "Tabela"
-        for extra, tmpl, label in self._extra_templates(d, t0, tn0, ns):
+        for _, tmpl, label in self._extra_templates(d, t0, tn0, ns):
             try:
                 content = self.env_extras.get_template(tmpl).render(
                     d=d, ns=ns, tabela=t0, tnome=tn0
                 )
-                path = f"{d.slug}/src/extras/{label}"
-                self._write(zf, path, content)
-            except Exception as e:
-                pass  # template ausente não bloqueia a geração
+                self._write(zf, f"{d.slug}/src/extras/{label}", content)
+            except Exception:
+                pass
 
     def _extra_templates(self, d, tabela, tnome, ns):
-        """Retorna lista de (extra_key, template_file, output_label)."""
         items = []
         if "workflow" in d.extras:
             items += [
@@ -89,6 +84,15 @@ class ModuloSEIGenerator:
             items += [
                 ("dashboard", "dashboard_controller.php.j2", f"{ns}DashboardController.php"),
                 ("dashboard", "dashboard_view.php.j2",       f"{d.slug}_dashboard.php"),
+            ]
+        if "job" in d.extras:
+            items += [
+                ("job", "job.php.j2",        f"{ns}Job.php"),
+                ("job", "job_config.php.j2", f"{d.slug}_job_config.exemplo.php"),
+            ]
+        if "sip" in d.extras:
+            items += [
+                ("sip", "sip_avancado.php.j2", "sip_atualizar_avancado.php"),
             ]
         return items
 

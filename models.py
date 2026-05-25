@@ -59,7 +59,7 @@ class ModuloDefinicao(BaseModel):
     tabelas: List[TabelaDTO]
     recursos: List[RecursoDTO]
     menus: List[MenuDTO]
-    extras: List[Literal["workflow", "exportacao", "dashboard"]] = []
+    extras: List[Literal["workflow", "exportacao", "dashboard", "job", "sip"]] = []
 
     @field_validator("slug")
     @classmethod
