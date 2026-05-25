@@ -71,8 +71,8 @@ class ModuloDefinicao(BaseModel):
     @field_validator("versao", "sei_versao_min")
     @classmethod
     def versao_semver(cls, v: str) -> str:
-        if not re.match(r"^[0-9]+[.][0-9]+[.][0-9]+$", v):
-            raise ValueError(f"Versão deve seguir semver (ex: 1.0.0): {v}")
+        if not re.match(r"^[0-9]+([.][0-9]+)*$", v):
+            raise ValueError(f"Versão deve ter formato numérico (ex: 1, 1.0, 1.0.0): {v}")
         return v
 
     @model_validator(mode="after")

@@ -67,7 +67,10 @@ class DeployConfig:
         if not os.path.exists(path):
             return None
         cfg = configparser.ConfigParser()
-        cfg.read(path, encoding="utf-8")
+        try:
+            cfg.read(path, encoding="utf-8")
+        except UnicodeDecodeError:
+            cfg.read(path, encoding="latin-1")
         s = cfg["sei"]
         return cls(
             modulos_dir      = s.get("modulos_dir", ""),

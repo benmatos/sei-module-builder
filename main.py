@@ -33,15 +33,15 @@ def get_deploy_cfg() -> DeployConfig | None:
 async def startup():
     init_db()
 
-# ── Wizard ────────────────────────────────────────────────────────────────────
+# Ã¢ÂÂÃ¢ÂÂ Wizard Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 @app.get("/", response_class=RedirectResponse)
 async def root(): return RedirectResponse("/wizard/1")
 
 @app.get("/wizard/1", response_class=HTMLResponse)
 async def w1_get(request: Request):
-    return templates.TemplateResponse("wizard/step1.html", {
-        "request": request, "flashes": get_flashes(request),
+    return templates.TemplateResponse(request, "wizard/step1.html", context={
+        "flashes": get_flashes(request),
         "data": request.session.get("step1", {})
     })
 
@@ -56,8 +56,8 @@ async def w1_post(request: Request, nome: str = Form(...), slug: str = Form(...)
 
 @app.get("/wizard/2", response_class=HTMLResponse)
 async def w2_get(request: Request):
-    return templates.TemplateResponse("wizard/step2.html", {
-        "request": request, "flashes": get_flashes(request),
+    return templates.TemplateResponse(request, "wizard/step2.html", context={
+        "flashes": get_flashes(request),
         "tabelas_json": json.dumps(request.session.get("step2", []))
     })
 
@@ -72,8 +72,8 @@ async def w2_post(request: Request, tabelas_json: str = Form(...)):
 
 @app.get("/wizard/3", response_class=HTMLResponse)
 async def w3_get(request: Request):
-    return templates.TemplateResponse("wizard/step3.html", {
-        "request": request, "flashes": get_flashes(request),
+    return templates.TemplateResponse(request, "wizard/step3.html", context={
+        "flashes": get_flashes(request),
         "recursos_json": json.dumps(request.session.get("step3_recursos", [])),
         "menus_json":    json.dumps(request.session.get("step3_menus", []))
     })
@@ -92,9 +92,8 @@ async def w3_post(request: Request, recursos_json: str = Form(...), menus_json: 
 async def w4_get(request: Request):
     deploy_cfg = get_deploy_cfg()
     deploy_ativo = deploy_cfg is not None and deploy_cfg.auto_deploy
-    valido, motivo = deploy_cfg.valido() if deploy_cfg else (False, "deploy.cfg não encontrado")
-    return templates.TemplateResponse("wizard/step4.html", {
-        "request":      request,
+    valido, motivo = deploy_cfg.valido() if deploy_cfg else (False, "deploy.cfg nÃÂ£o encontrado")
+    return templates.TemplateResponse(request, "wizard/step4.html", context={
         "flashes":      get_flashes(request),
         "step1":        request.session.get("step1", {}),
         "tabelas":      request.session.get("step2", []),
@@ -115,7 +114,7 @@ async def gerar_wizard(request: Request):
         }
         definicao = ModuloDefinicao(**payload)
     except ValidationError as e:
-        flash(request, f"Dados inválidos: {e.error_count()} erro(s). Revise os passos anteriores.")
+        flash(request, f"Dados invÃ¡lidos: {e.error_count()} erro(s). Revise os passos anteriores.")
         return RedirectResponse("/wizard/4", status_code=303)
 
     gen       = ModuloSEIGenerator()
@@ -128,7 +127,7 @@ async def gerar_wizard(request: Request):
     except Exception:
         pass
 
-    # ── Auto-deploy ───────────────────────────────────────────────────────────
+    # Ã¢ÂÂÃ¢ÂÂ Auto-deploy Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     deploy_result = None
     deploy_cfg = get_deploy_cfg()
     if deploy_cfg and deploy_cfg.auto_deploy:
@@ -141,7 +140,7 @@ async def gerar_wizard(request: Request):
     for k in ("step1", "step2", "step3_recursos", "step3_menus"):
         request.session.pop(k, None)
 
-    # Se deploy ativo, redireciona para página de resultado
+    # Se deploy ativo, redireciona para pÃÂ¡gina de resultado
     if deploy_result:
         return RedirectResponse("/deploy/resultado", status_code=303)
 
@@ -153,24 +152,22 @@ async def gerar_wizard(request: Request):
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-# ── Resultado do deploy ───────────────────────────────────────────────────────
+# Ã¢ÂÂÃ¢ÂÂ Resultado do deploy Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 @app.get("/deploy/resultado", response_class=HTMLResponse)
 async def deploy_resultado(request: Request):
     result_data = request.session.pop("ultimo_deploy", None)
     if not result_data:
         return RedirectResponse("/", status_code=303)
-    return templates.TemplateResponse("deploy/resultado.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "deploy/resultado.html", context={
         "r":       result_data,
     })
 
-# ── Projetos ──────────────────────────────────────────────────────────────────
+# Ã¢ÂÂÃ¢ÂÂ Projetos Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 @app.get("/projetos", response_class=HTMLResponse)
 async def projetos_list(request: Request):
-    return templates.TemplateResponse("projetos/index.html", {
-        "request":  request,
+    return templates.TemplateResponse(request, "projetos/index.html", context={
         "flashes":  get_flashes(request),
         "projetos": listar_projetos(),
     })
@@ -179,17 +176,17 @@ async def projetos_list(request: Request):
 async def projeto_detalhe(request: Request, projeto_id: int):
     projeto = carregar_projeto(projeto_id)
     if not projeto:
-        flash(request, "Projeto não encontrado.")
+        flash(request, "Projeto nÃÂ£o encontrado.")
         return RedirectResponse("/projetos", status_code=303)
-    return templates.TemplateResponse("projetos/detalhe.html", {
-        "request": request, "flashes": get_flashes(request), "projeto": projeto,
+    return templates.TemplateResponse(request, "projetos/detalhe.html", context={
+        "flashes": get_flashes(request), "projeto": projeto,
     })
 
 @app.post("/projetos/{projeto_id}/carregar", response_class=RedirectResponse)
 async def projeto_carregar(request: Request, projeto_id: int):
     projeto = carregar_projeto(projeto_id)
     if not projeto:
-        flash(request, "Projeto não encontrado.")
+        flash(request, "Projeto nÃÂ£o encontrado.")
         return RedirectResponse("/projetos", status_code=303)
     d = projeto["definicao"]
     request.session["step1"]          = {k: d[k] for k in ("nome","slug","namespace","descricao","versao","sei_versao_min","autor")}
@@ -202,10 +199,10 @@ async def projeto_carregar(request: Request, projeto_id: int):
 @app.post("/projetos/{projeto_id}/excluir", response_class=RedirectResponse)
 async def projeto_excluir(request: Request, projeto_id: int):
     excluir_projeto(projeto_id)
-    flash(request, "Projeto excluído.", "success")
+    flash(request, "Projeto excluÃÂ­do.", "success")
     return RedirectResponse("/projetos", status_code=303)
 
-# ── API ───────────────────────────────────────────────────────────────────────
+# Ã¢ÂÂÃ¢ÂÂ API Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 @app.post("/api/gerar")
 async def api_gerar(definicao: ModuloDefinicao):

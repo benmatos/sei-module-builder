@@ -4,7 +4,8 @@
 <h1 class="text-2xl font-bold mb-1">Passo 2 de 4 — Estrutura de Dados</h1>
 <p class="text-sm text-gray-500 mb-6">Arraste as tabelas e colunas para reordenar.</p>
 
-<form method="POST" action="/wizard/2" x-data="tabelasApp()" x-init="init()">
+<form method="POST" action="/wizard/2" x-data="tabelasApp()" x-init="init()" @submit.prevent="enviarForm($event)">
+  <div class="mb-2">Tabelas criadas: <span x-text="tabelas.length"></span></div>
   <div id="sortable-tabelas" class="space-y-4">
     <template x-for="(tabela, ti) in tabelas" :key="ti">
       <div class="border rounded-lg bg-white shadow-sm overflow-hidden tabela-item">
@@ -68,12 +69,19 @@
 </form>
 
 <script>
-function tabelasApp() {
+window.tabelasApp = function() {
   return {
     tabelas: [],
     init() {
       try { this.tabelas = JSON.parse({{ tabelas_json|tojson }}); } catch(e) { this.tabelas = []; }
       this.$nextTick(() => this.initSortable());
+    },
+    enviarForm(e) {
+      if (this.tabelas.length === 0) {
+        alert('Adicione pelo menos uma tabela antes de prosseguir!');
+        return;
+      }
+      e.target.submit();
     },
     initSortable() {
       // Sortable para tabelas
