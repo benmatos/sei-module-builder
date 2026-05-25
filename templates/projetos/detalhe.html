@@ -2,7 +2,7 @@
 {% block title %}{{ projeto.nome }}{% endblock %}
 {% block content %}
 <div class="flex items-center gap-3 mb-6">
-  <a href="/projetos" class="text-gray-500 hover:text-gray-700">← Projetos</a>
+  <a href="/projetos" class="text-gray-500 hover:text-gray-700 text-sm">← Projetos</a>
   <h1 class="text-2xl font-bold">{{ projeto.nome }}</h1>
   <code class="bg-gray-100 text-sm px-2 py-0.5 rounded">{{ projeto.slug }}</code>
 </div>
@@ -26,8 +26,27 @@
   </div>
 </div>
 
+{% if projeto.definicao.extras %}
+<div class="mb-6">
+  <p class="text-sm font-medium text-gray-700 mb-2">Templates opcionais</p>
+  <div class="flex gap-2 flex-wrap">
+    {% set badges = {
+      "workflow":   ("Workflow",    "bg-blue-100 text-blue-700"),
+      "exportacao": ("Exportação",  "bg-green-100 text-green-700"),
+      "dashboard":  ("Dashboard",   "bg-purple-100 text-purple-700"),
+      "job":        ("Job",         "bg-orange-100 text-orange-700"),
+      "sip":        ("SIP Avançado","bg-red-100 text-red-700")
+    } %}
+    {% for extra in projeto.definicao.extras %}
+    {% set label, cls = badges.get(extra, (extra, "bg-gray-100 text-gray-700")) %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium {{ cls }}">{{ label }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 {% if projeto.geracoes %}
-<h2 class="font-semibold mb-3">Histórico de Gerações</h2>
+<h2 class="font-semibold mb-3 text-sm">Histórico de Gerações</h2>
 <table class="w-full text-sm border rounded overflow-hidden mb-6">
   <thead class="bg-gray-50">
     <tr>
@@ -48,13 +67,21 @@
 </table>
 {% endif %}
 
-<div class="flex gap-3">
+<div class="flex gap-3 flex-wrap">
   <form method="POST" action="/projetos/{{ projeto.id }}/carregar">
-    <button class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800">Carregar no Wizard</button>
+    <button class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 text-sm">
+      Carregar no Wizard
+    </button>
   </form>
+  <a href="/projetos/{{ projeto.id }}/exportar"
+     class="border border-gray-300 px-5 py-2 rounded text-sm hover:bg-gray-50 flex items-center gap-1">
+    ⬇ Exportar JSON
+  </a>
   <form method="POST" action="/projetos/{{ projeto.id }}/excluir"
         onsubmit="return confirm('Excluir este projeto?')">
-    <button class="border border-red-300 text-red-600 px-5 py-2 rounded hover:bg-red-50">Excluir</button>
+    <button class="border border-red-300 text-red-600 px-5 py-2 rounded hover:bg-red-50 text-sm">
+      Excluir
+    </button>
   </form>
 </div>
 {% endblock %}
