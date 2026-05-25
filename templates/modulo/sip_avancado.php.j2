@@ -1,0 +1,105 @@
+<?php
+// Script de atualização SIP avançado — {{ d.nome }}
+// Cria perfis, associa recursos e configura menus no SIP
+// Gerado por SEI Module Builder (template: sip_avancado)
+
+require_once dirname(dirname(dirname(dirname(__FILE__)))) . '/SIP.php';
+
+try {
+    $objBanco = BancoSIP::getInstance();
+
+    // ── Perfis ────────────────────────────────────────────────────────────────
+    $arrPerfis = array(
+        array(
+            'nome'      => '{{ d.slug }}_basico',
+            'descricao' => 'Acesso básico ao módulo {{ d.nome }}',
+            'sistema'   => '{{ d.slug }}',
+        ),
+        array(
+            'nome'      => '{{ d.slug }}_gestor',
+            'descricao' => 'Gestão completa do módulo {{ d.nome }}',
+            'sistema'   => '{{ d.slug }}',
+        ),
+    );
+
+    foreach ($arrPerfis as $perfil) {
+        $objPerfilDTO = new PerfilDTO();
+        $objPerfilDTO->setStrNome($perfil['nome']);
+        $objPerfilDTO->setStrDescricao($perfil['descricao']);
+        $objPerfilDTO->setStrSistema($perfil['sistema']);
+
+        $objPerfilRN = new PerfilRN();
+        $objBuscaDTO = new PerfilDTO();
+        $objBuscaDTO->setStrNome($perfil['nome']);
+        $objPerfilRN->listar($objBuscaDTO);
+
+        if (count($objBuscaDTO->toArray()) === 0) {
+            $objPerfilRN->incluir($objPerfilDTO);
+            echo "Perfil criado: {$perfil['nome']}\n";
+        } else {
+            echo "Perfil já existe: {$perfil['nome']}\n";
+        }
+    }
+
+    // ── Recursos por perfil ───────────────────────────────────────────────────
+    $arrRecursosPorPerfil = array(
+        '{{ d.slug }}_basico' => array(
+            {% for recurso in d.recursos %}
+            '{{ recurso.nome }}',
+            {% endfor %}
+        ),
+        '{{ d.slug }}_gestor' => array(
+            {% for recurso in d.recursos %}
+            '{{ recurso.nome }}',
+            {% endfor %}
+            // Gestor herda todos os recursos básicos + pode adicionar exclusivos
+        ),
+    );
+
+    foreach ($arrRecursosPorPerfil as $strPerfil => $arrRecursos) {
+        foreach ($arrRecursos as $strRecurso) {
+            $objAssocDTO = new PerfilRecursoDTO();
+            $objAssocDTO->setStrNomePerfil($strPerfil);
+            $objAssocDTO->setStrNomeRecurso($strRecurso);
+
+            $objAssocRN  = new PerfilRecursoRN();
+            $objBuscaDTO = new PerfilRecursoDTO();
+            $objBuscaDTO->setStrNomePerfil($strPerfil);
+            $objBuscaDTO->setStrNomeRecurso($strRecurso);
+            $objAssocRN->listar($objBuscaDTO);
+
+            if (count($objBuscaDTO->toArray()) === 0) {
+                $objAssocRN->incluir($objAssocDTO);
+                echo "Recurso '{$strRecurso}' associado ao perfil '{$strPerfil}'\n";
+            }
+        }
+    }
+
+    // ── Menus SIP ─────────────────────────────────────────────────────────────
+    {% for menu in d.menus %}
+    $objMenuDTO = new MenuDTO();
+    $objMenuDTO->setStrTitulo('{{ menu.titulo }}');
+    $objMenuDTO->setStrLink('{{ menu.link }}');
+    $objMenuDTO->setStrIcone('{{ menu.icone }}');
+    $objMenuDTO->setStrSistema('{{ d.slug }}');
+    $objMenuDTO->setStrPerfil('{{ menu.perfil_requerido }}');
+
+    $objMenuRN  = new MenuRN();
+    $objBuscaDTO = new MenuDTO();
+    $objBuscaDTO->setStrLink('{{ menu.link }}');
+    $objMenuRN->listar($objBuscaDTO);
+
+    if (count($objBuscaDTO->toArray()) === 0) {
+        $objMenuRN->incluir($objMenuDTO);
+        echo "Menu criado: {{ menu.titulo }}\n";
+    } else {
+        echo "Menu já existe: {{ menu.titulo }}\n";
+    }
+    {% endfor %}
+
+    echo "\nScript SIP avançado concluído com sucesso.\n";
+
+} catch (Exception $e) {
+    echo 'ERRO: ' . $e->getMessage() . "\n";
+    exit(1);
+}

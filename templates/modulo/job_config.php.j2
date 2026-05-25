@@ -1,0 +1,13 @@
+<?php
+// Trecho de registro do job — adicionar em ConfiguracaoSEI.php
+// dentro do método inicializarObjInfraModulo() ou equivalente
+
+// Registrar job agendado {{ d.nome }}
+InfraJob::registrarJob(
+    new {{ ns }}Job(),
+    array(
+        'intervalo_minutos' => 60,      // frequência padrão; ajustável via interface SEI
+        'ativo'             => true,    // false para iniciar desativado
+        'executar_na_ativacao' => false, // true para executar imediatamente ao ativar o módulo
+    )
+);

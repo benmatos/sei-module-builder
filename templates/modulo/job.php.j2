@@ -1,0 +1,71 @@
+<?php
+// Job agendado — {{ d.nome }}
+// Gerado por SEI Module Builder (template: job)
+// Registrar em ConfiguracaoSEI.php via InfraJob::registrarJob()
+
+class {{ ns }}Job extends InfraJob {
+
+    /**
+     * Identificador único do job — deve ser registrado no ConfiguracaoSEI.php.
+     */
+    const NOME = '{{ d.slug }}_job';
+
+    public function getNome() {
+        return self::NOME;
+    }
+
+    public function getDescricao() {
+        return 'Job agendado do módulo {{ d.nome }}';
+    }
+
+    /**
+     * Frequência padrão de execução (em minutos).
+     * Pode ser sobrescrita pelo administrador via interface SEI.
+     */
+    public function getIntervaloMinutos() {
+        return 60;
+    }
+
+    /**
+     * Ponto de entrada do job.
+     * Executado pelo scheduler do SEI conforme o intervalo configurado.
+     */
+    public function executar() {
+        try {
+            InfraLog::registrar(self::NOME, InfraLog::NIVEL_INFO, 'Início da execução.');
+
+            $this->processarPendentes();
+
+            InfraLog::registrar(self::NOME, InfraLog::NIVEL_INFO, 'Execução concluída com sucesso.');
+        } catch (Exception $e) {
+            InfraLog::registrar(self::NOME, InfraLog::NIVEL_ERRO,
+                'Erro na execução: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ── Lógica do job ─────────────────────────────────────────────────────────
+
+    private function processarPendentes() {
+        {% if d.tabelas %}
+        $obj{{ d.tabelas[0].nome | pascalcase }}DTO = new {{ ns }}{{ d.tabelas[0].nome | pascalcase }}DTO();
+        // TODO: definir filtro para registros pendentes de processamento
+        // ex: $obj{{ d.tabelas[0].nome | pascalcase }}DTO->setStrEstado('P');
+        (new {{ ns }}{{ d.tabelas[0].nome | pascalcase }}RN())->listar($obj{{ d.tabelas[0].nome | pascalcase }}DTO);
+
+        $arrPendentes = $obj{{ d.tabelas[0].nome | pascalcase }}DTO->toArray();
+        InfraLog::registrar(self::NOME, InfraLog::NIVEL_INFO,
+            count($arrPendentes) . ' registro(s) pendente(s) encontrado(s).');
+
+        foreach ($arrPendentes as $item) {
+            $this->processarItem($item);
+        }
+        {% endif %}
+    }
+
+    private function processarItem(array $item) {
+        // TODO: implementar lógica de processamento por item
+        InfraLog::registrar(self::NOME, InfraLog::NIVEL_DEBUG,
+            'Processando item: ' . json_encode(array_slice($item, 0, 3)));
+    }
+}
