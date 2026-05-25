@@ -5,13 +5,13 @@
 
 <form method="POST" action="/wizard/1" class="space-y-4">
   {% for field, label, placeholder in [
-    ("nome",          "Nome do Módulo",          "Módulo de Manifestação"),
-    ("slug",          "Slug",                    "mod_manifestacao"),
-    ("namespace",     "Namespace PHP",           "ModManifestacao"),
-    ("descricao",     "Descrição",               "Gerencia manifestações de usuários"),
-    ("versao",        "Versão",                  "1.0.0"),
-    ("sei_versao_min","Versão mínima do SEI",    "3.1.0"),
-    ("autor",         "Autor",                   "Nome / Equipe")
+    ("nome",          "Nome do Módulo",       "Módulo de Manifestação"),
+    ("slug",          "Slug",                 "mod_manifestacao"),
+    ("namespace",     "Namespace PHP",        "ModManifestacao"),
+    ("descricao",     "Descrição",            "Gerencia manifestações de usuários"),
+    ("versao",        "Versão",               "1.0.0"),
+    ("sei_versao_min","Versão mínima do SEI", "3.1.0"),
+    ("autor",         "Autor",                "Nome / Equipe")
   ] %}
   <div>
     <label class="block text-sm font-medium text-gray-700 mb-1">{{ label }}</label>
@@ -24,54 +24,55 @@
 
   <!-- Templates opcionais -->
   <div class="pt-2">
-    <p class="text-sm font-medium text-gray-700 mb-3">Templates opcionais</p>
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <p class="text-sm font-medium text-gray-700 mb-1">Templates opcionais</p>
+    <p class="text-xs text-gray-400 mb-3">Arquivos extras gerados em <code>src/extras/</code></p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
-      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer hover:border-blue-400
-                    has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-colors">
-        <input type="checkbox" name="extras" value="workflow" class="mt-0.5 rounded"
-               {{ 'checked' if 'workflow' in data.get('extras', []) }}/>
+      {% set extras_config = [
+        ("workflow",   "Workflow",      "fa-code-branch", "blue",
+         "Aprovação multi-etapa com estados Rascunho → Pendente → Aprovado/Rejeitado, parecer obrigatório e histórico de tramitação."),
+        ("exportacao", "Exportação",    "fa-file-export", "green",
+         "Relatórios Excel e PDF via InfraRelatorio com filtros por período gerados automaticamente para colunas date/datetime."),
+        ("dashboard",  "Dashboard",     "fa-chart-pie",   "purple",
+         "Cards de totais e gráficos doughnut (Chart.js) para colunas char(1) de status/tipo."),
+        ("job",        "Job Agendado",  "fa-clock",       "orange",
+         "Classe InfraJob com execução periódica, log via InfraLog e snippet de registro no ConfiguracaoSEI.php."),
+        ("sip",        "SIP Avançado",  "fa-shield-alt",  "red",
+         "Script sip_atualizar avançado com criação de perfis, associação de recursos por perfil e registro de menus no SIP.")
+      ] %}
+
+      {% for value, label, icon, color, desc in extras_config %}
+      {% set cores = {
+        "blue":   "border-blue-500 bg-blue-50 text-blue-700",
+        "green":  "border-green-500 bg-green-50 text-green-700",
+        "purple": "border-purple-500 bg-purple-50 text-purple-700",
+        "orange": "border-orange-500 bg-orange-50 text-orange-700",
+        "red":    "border-red-500 bg-red-50 text-red-700"
+      } %}
+      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer
+                    hover:border-{{ color }}-400 transition-colors
+                    has-[:checked]:{{ cores[color] }}">
+        <input type="checkbox" name="extras" value="{{ value }}" class="mt-0.5 rounded"
+               {{ 'checked' if value in data.get('extras', []) }}/>
         <div>
-          <p class="text-sm font-semibold text-gray-800">Workflow</p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Aprovação multi-etapa com estados Rascunho → Pendente → Aprovado/Rejeitado,
-            parecer obrigatório e histórico de tramitação.
-          </p>
+          <p class="text-sm font-semibold text-gray-800">{{ label }}</p>
+          <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ desc }}</p>
         </div>
       </label>
-
-      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer hover:border-blue-400
-                    has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-colors">
-        <input type="checkbox" name="extras" value="exportacao" class="mt-0.5 rounded"
-               {{ 'checked' if 'exportacao' in data.get('extras', []) }}/>
-        <div>
-          <p class="text-sm font-semibold text-gray-800">Exportação</p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Controller e view para relatórios em Excel e PDF com filtros
-            por período via InfraRelatorio.
-          </p>
-        </div>
-      </label>
-
-      <label class="flex items-start gap-3 border rounded-lg p-3 cursor-pointer hover:border-blue-400
-                    has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-colors">
-        <input type="checkbox" name="extras" value="dashboard" class="mt-0.5 rounded"
-               {{ 'checked' if 'dashboard' in data.get('extras', []) }}/>
-        <div>
-          <p class="text-sm font-semibold text-gray-800">Dashboard</p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            Cards de totais e gráficos doughnut (Chart.js) para colunas
-            <code class="bg-gray-100 px-0.5 rounded">char(1)</code> de status/tipo.
-          </p>
-        </div>
-      </label>
+      {% endfor %}
 
     </div>
   </div>
 
-  <button type="submit"
-          class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800 text-sm font-medium">
-    Próximo →
-  </button>
+  <div class="flex items-center gap-4 pt-2">
+    <button type="submit"
+            class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800 text-sm font-medium">
+      Próximo →
+    </button>
+    <!-- Importar projeto existente -->
+    <a href="/importar" class="text-sm text-gray-500 hover:text-blue-600 underline">
+      ou importar JSON de projeto existente
+    </a>
+  </div>
 </form>
 {% endblock %}
