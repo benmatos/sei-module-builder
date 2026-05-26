@@ -1,38 +1,53 @@
 <?php
 // RN: {{ tabela.nome }} — Gerado por SEI Module Builder
 
+require_once DIR_SEI_WEB.'/SEI.php';
+
 class {{ ns }}{{ tnome }}RN extends InfraRN {
 
-    private $objInfraRN;
-
     public function __construct() {
-        $this->objInfraRN = new InfraRN();
+        parent::__construct();
     }
 
-    public function listar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
-        $this->objInfraRN->listar($obj{{ tnome }}DTO);
-        return $obj{{ tnome }}DTO;
+    protected function inicializarObjInfraIBanco() {
+        return BancoSEI::getInstance();
     }
 
-    public function consultar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
-        $this->objInfraRN->consultar($obj{{ tnome }}DTO);
-        return $obj{{ tnome }}DTO;
-    }
-
-    public function cadastrar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+    protected function cadastrarControlado({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        SessaoSEI::getInstance()->validarAuditarPermissao('{{ d.slug }}_{{ tabela.nome }}_cadastrar', __METHOD__, $obj{{ tnome }}DTO);
         $this->validar($obj{{ tnome }}DTO);
-        $this->objInfraRN->incluir($obj{{ tnome }}DTO);
+        
+        $objInfraIBanco = $this->inicializarObjInfraIBanco();
+        $obj{{ tnome }}BD = new {{ ns }}{{ tnome }}BD($objInfraIBanco);
+        $obj{{ tnome }}BD->incluir($obj{{ tnome }}DTO);
+        
         return $obj{{ tnome }}DTO;
     }
 
-    public function alterar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+    protected function alterarControlado({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
+        SessaoSEI::getInstance()->validarAuditarPermissao('{{ d.slug }}_{{ tabela.nome }}_alterar', __METHOD__, $obj{{ tnome }}DTO);
         $this->validar($obj{{ tnome }}DTO);
-        $this->objInfraRN->alterar($obj{{ tnome }}DTO);
+        
+        $objInfraIBanco = $this->inicializarObjInfraIBanco();
+        $obj{{ tnome }}BD = new {{ ns }}{{ tnome }}BD($objInfraIBanco);
+        $obj{{ tnome }}BD->alterar($obj{{ tnome }}DTO);
+        
         return $obj{{ tnome }}DTO;
     }
 
-    public function excluir({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {
-        $this->objInfraRN->excluir($obj{{ tnome }}DTO);
+    protected function excluirControlado($arrObj{{ tnome }}DTO) {
+        SessaoSEI::getInstance()->validarAuditarPermissao('{{ d.slug }}_{{ tabela.nome }}_excluir', __METHOD__, $arrObj{{ tnome }}DTO);
+        
+        $objInfraIBanco = $this->inicializarObjInfraIBanco();
+        $obj{{ tnome }}BD = new {{ ns }}{{ tnome }}BD($objInfraIBanco);
+        
+        if (is_array($arrObj{{ tnome }}DTO)) {
+            foreach ($arrObj{{ tnome }}DTO as $obj{{ tnome }}DTO) {
+                $obj{{ tnome }}BD->excluir($obj{{ tnome }}DTO);
+            }
+        } else {
+            $obj{{ tnome }}BD->excluir($arrObj{{ tnome }}DTO);
+        }
     }
 
     private function validar({{ ns }}{{ tnome }}DTO $obj{{ tnome }}DTO) {

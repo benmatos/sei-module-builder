@@ -33,6 +33,7 @@ class DeployResult:
     sucesso: bool
     backup_tag: str = ""
     backup_path: str = ""
+    config_backup_path: str = ""
     etapas: list[dict] = field(default_factory=list)
     erros: list[str]   = field(default_factory=list)
 
@@ -41,13 +42,14 @@ class DeployResult:
 
     def to_dict(self) -> dict:
         return {
-            "slug":        self.slug,
-            "versao":      self.versao,
-            "sucesso":     self.sucesso,
-            "backup_tag":  self.backup_tag,
-            "backup_path": self.backup_path,
-            "etapas":      self.etapas,
-            "erros":       self.erros,
+            "slug":               self.slug,
+            "versao":             self.versao,
+            "sucesso":            self.sucesso,
+            "backup_tag":         self.backup_tag,
+            "backup_path":        self.backup_path,
+            "config_backup_path": self.config_backup_path,
+            "etapas":             self.etapas,
+            "erros":              self.erros,
         }
 
 
@@ -134,7 +136,8 @@ class DeployLocal:
 
             # 3. Patch ConfiguracaoSEI.php
             ns = self._inferir_namespace(zip_buf, slug)
-            patched, msg = self._patch_configuracao_sei(slug, ns)
+            patched, msg, bk_config = self._patch_configuracao_sei(slug, ns)
+            result.config_backup_path = str(bk_config) if bk_config else ""
             result.adicionar_etapa("ConfiguracaoSEI.php", patched, msg)
 
             # 4. sei_atualizar.php
@@ -173,15 +176,26 @@ class DeployLocal:
         return bk_path
 
     def _rollback(self, slug: str, tag: str, result: DeployResult):
+        # 1. Rollback do diretório do módulo
         bk_path = Path(self.cfg.backup_dir) / f"{slug}_{tag}"
         destino = Path(self.cfg.modulos_dir) / slug
         if bk_path.exists():
             if destino.exists():
                 shutil.rmtree(str(destino))
             shutil.copytree(str(bk_path), str(destino))
-            result.adicionar_etapa("Rollback automático", True, f"Restaurado de {bk_path}")
+            result.adicionar_etapa("Rollback automático (Diretório)", True, f"Restaurado de {bk_path}")
         else:
-            result.adicionar_etapa("Rollback automático", False, "Backup não encontrado — módulo pode estar incompleto")
+            result.adicionar_etapa("Rollback automático (Diretório)", False, "Backup não encontrado — módulo pode estar incompleto")
+
+        # 2. Rollback do ConfiguracaoSEI.php
+        if result.config_backup_path:
+            bk_cfg = Path(result.config_backup_path)
+            orig_cfg = Path(self.cfg.configuracao_sei)
+            if bk_cfg.exists():
+                shutil.copy2(str(bk_cfg), str(orig_cfg))
+                result.adicionar_etapa("Rollback automático (ConfiguracaoSEI.php)", True, f"Restaurado de {bk_cfg.name}")
+            else:
+                result.adicionar_etapa("Rollback automático (ConfiguracaoSEI.php)", False, "Arquivo de backup não encontrado")
 
     # ── Extração ──────────────────────────────────────────────────────────────
 
@@ -196,13 +210,13 @@ class DeployLocal:
 
     # ── Patch ConfiguracaoSEI.php ─────────────────────────────────────────────
 
-    def _patch_configuracao_sei(self, slug: str, ns: str) -> tuple[bool, str]:
+    def _patch_configuracao_sei(self, slug: str, ns: str) -> tuple[bool, str, Path | None]:
         cfg_path = Path(self.cfg.configuracao_sei)
         conteudo = cfg_path.read_text(encoding="utf-8", errors="ignore")
 
         # Já registrado?
         if f"{ns}Integracao" in conteudo:
-            return True, "Módulo já registrado — sem alteração"
+            return True, "Módulo já registrado — sem alteração", None
 
         # Backup antes de modificar
         bk = cfg_path.with_suffix(f".php.bak.{datetime.now().strftime('%Y%m%d_%H%M%S')}")
@@ -222,21 +236,35 @@ class DeployLocal:
             pos = ultima.end()
             novo_conteudo = conteudo[:pos] + "\n" + linha_nova + conteudo[pos:]
             cfg_path.write_text(novo_conteudo, encoding="utf-8")
-            return True, f"Linha inserida após registro existente (backup: {bk.name})"
+            return True, f"Linha inserida após registro existente (backup: {bk.name})", bk
 
-        # Fallback: inserir antes do fechamento de inicializarObjInfraModulo
+        # Fallback 1: inserir antes do fechamento de inicializarObjInfraModulo
         m = re.search(r"(function inicializarObjInfraModulo[^{]*\{[^}]*)(\})", conteudo, re.DOTALL)
         if m:
             novo_conteudo = conteudo[:m.start(2)] + linha_nova + "\n    " + conteudo[m.start(2):]
             cfg_path.write_text(novo_conteudo, encoding="utf-8")
-            return True, f"Linha inserida em inicializarObjInfraModulo (backup: {bk.name})"
+            return True, f"Linha inserida em inicializarObjInfraModulo (backup: {bk.name})", bk
 
-        return False, "Ponto de inserção não encontrado — adicione manualmente"
+        # Fallback 2: Array 'Modulos' => array(...) ou ['Modulos' => [...]]
+        m_array = re.search(r"(['\"]Modulos['\"]\s*=>\s*(?:array\(|\[))", conteudo)
+        if m_array:
+            linha_array = f"\n                '{ns}Integracao' => '{slug}',"
+            pos = m_array.end()
+            novo_conteudo = conteudo[:pos] + linha_array + conteudo[pos:]
+            cfg_path.write_text(novo_conteudo, encoding="utf-8")
+            return True, f"Linha inserida no array 'Modulos' (backup: {bk.name})", bk
+
+        return False, "Ponto de inserção não encontrado — adicione manualmente", None
 
     # ── PHP scripts ───────────────────────────────────────────────────────────
 
     def _executar_php(self, slug: str, script: str) -> tuple[bool, str]:
-        caminho = Path(self.cfg.modulos_dir) / slug / "src" / "scripts" / script
+        # Tenta com e sem 'src' (o SEI Module Builder não gera 'src' na raiz do zip por padrão)
+        caminho_com_src = Path(self.cfg.modulos_dir) / slug / "src" / "scripts" / script
+        caminho_sem_src = Path(self.cfg.modulos_dir) / slug / "scripts" / script
+
+        caminho = caminho_com_src if caminho_com_src.exists() else caminho_sem_src
+
         if not caminho.exists():
             return True, f"{script} não encontrado — ignorado"
         r = subprocess.run(
@@ -263,7 +291,8 @@ class DeployLocal:
             zip_buf.seek(0)
             with zipfile.ZipFile(zip_buf) as zf:
                 for nome in zf.namelist():
-                    if re.search(rf"{re.escape(slug)}/src/\w+Integracao\.php$", nome):
+                    # Tenta encontrar a classe Integracao com ou sem 'src'
+                    if re.search(rf"{re.escape(slug)}/(?:src/)?\w+Integracao\.php$", nome):
                         conteudo = zf.read(nome).decode("utf-8", errors="ignore")
                         m = re.search(r"class (\w+)Integracao", conteudo)
                         if m:

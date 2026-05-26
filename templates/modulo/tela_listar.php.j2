@@ -1,0 +1,64 @@
+<?php
+// Tela de Listagem: {{ tabela.nome }} — Gerado por SEI Module Builder
+
+try {
+    $objPaginaSEI = PaginaSEI::getInstance();
+    $strTitulo = 'Listagem de {{ tabela.nome | pascalcase }}';
+
+    $objPaginaSEI->montarDocType();
+    $objPaginaSEI->abrirHtml();
+    $objPaginaSEI->abrirHead();
+    $objPaginaSEI->montarMeta();
+    $objPaginaSEI->montarTitle($objPaginaSEI->getStrNomeSistema() . ' - ' . $strTitulo);
+    $objPaginaSEI->montarStyle();
+    $objPaginaSEI->montarJavaScript();
+    $objPaginaSEI->fecharHead();
+    $objPaginaSEI->abrirBody($strTitulo);
+
+    // Lógica da Tabela
+    $obj{{ tnome }}RN = new {{ ns }}{{ tnome }}RN();
+    $obj{{ tnome }}DTO = new {{ ns }}{{ tnome }}DTO();
+    $obj{{ tnome }}DTO->retTodos();
+    $arr{{ tnome }} = $obj{{ tnome }}RN->listar($obj{{ tnome }}DTO);
+
+    ?>
+    <div class="infraAreaDados">
+        <table class="infraTable">
+            <thead>
+                <tr>
+                    {% for col in tabela.colunas %}
+                    <th class="infraTh">{{ col.nome | pascalcase }}</th>
+                    {% endfor %}
+                    <th class="infraTh">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set pk_col = (tabela.colunas | selectattr("chave_primaria") | first) or tabela.colunas[0] %}
+                <?php foreach ($arr{{ tnome }} as $row): ?>
+                <tr>
+                    {% for col in tabela.colunas %}
+                    <td><?php echo htmlspecialchars($row->get{{ col.nome | pascalcase }}()); ?></td>
+                    {% endfor %}
+                    <td>
+                        <a href="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_alterar&id=<?php echo $row->get{{ pk_col.nome | pascalcase }}(); ?>">Alterar</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if (count($arr{{ tnome }}) == 0): ?>
+                <tr><td colspan="{{ tabela.colunas | length + 1 }}">Nenhum registro encontrado.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 16px;">
+            <a href="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_cadastrar" class="infraButton">Novo Registro</a>
+        </div>
+    </div>
+    <?php
+
+    $objPaginaSEI->fecharBody();
+    $objPaginaSEI->fecharHtml();
+
+} catch (Exception $e) {
+    PaginaSEI::getInstance()->processarExcecao($e);
+}

@@ -6,29 +6,33 @@ require_once dirname(dirname(dirname(dirname(__FILE__)))) . "/SEI.php";
 
 try {
     $objInfraBanco = BancoSEI::getInstance();
+    $objInfraBanco->abrirConexao();
 
     {% for tabela in d.tabelas %}
     // Tabela: {{ tabela.nome }}
-    if (!$objInfraBanco->tabelaExiste('{{ tabela.nome }}')) {
-        $objInfraBanco->criarTabela('{{ tabela.nome }}', array(
-            {% for col in tabela.colunas %}
-            array(
-                'nome'      => '{{ col.nome }}',
-                'tipo'      => {{ col.tipo | tipo_infrabanco }},
-                'nulo'      => {{ 'false' if col.obrigatorio else 'true' }},
-                {% if col.chave_primaria %}'chave_primaria' => true,{% endif %}
-            ),
-            {% endfor %}
-        ));
-        echo "Tabela {{ tabela.nome }} criada.
-";
+    $bolExiste = false;
+    try {
+        $objInfraBanco->consultarSql("select 1 from {{ tabela.nome }} where 1=0");
+        $bolExiste = true;
+    } catch (Exception $e) {
+        $bolExiste = false;
+    }
+
+    if (!$bolExiste) {
+        $sql = "CREATE TABLE {{ tabela.nome }} (";
+        {% for col in tabela.colunas %}
+        $sql .= "{{ col.nome }} {{ col.tipo }} {% if col.chave_primaria %}PRIMARY KEY{% endif %} {% if col.obrigatorio %}NOT NULL{% else %}NULL{% endif %},";
+        {% endfor %}
+        $sql = rtrim($sql, ",") . ")";
+        
+        $objInfraBanco->executarSql($sql);
+        echo "Tabela {{ tabela.nome }} criada.\n";
     }
     {% endfor %}
 
-    echo "Script concluido com sucesso.
-";
+    echo "Script concluido com sucesso.\n";
+    $objInfraBanco->fecharConexao();
 } catch (Exception $e) {
-    echo "ERRO: " . $e->getMessage() . "
-";
+    echo "ERRO: " . $e->getMessage() . "\n";
     exit(1);
 }

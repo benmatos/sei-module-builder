@@ -77,10 +77,7 @@ window.tabelasApp = function() {
       this.$nextTick(() => this.initSortable());
     },
     enviarForm(e) {
-      if (this.tabelas.length === 0) {
-        alert('Adicione pelo menos uma tabela antes de prosseguir!');
-        return;
-      }
+      // Agora permite seguir mesmo sem tabelas
       e.target.submit();
     },
     initSortable() {

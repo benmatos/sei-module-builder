@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json, os, io
+from typing import Optional, List
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -33,7 +34,7 @@ def get_deploy_cfg() -> DeployConfig | None:
 async def startup():
     init_db()
 
-# Ã¢ÂÂÃ¢ÂÂ Wizard Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ Wizard ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€
 
 @app.get("/", response_class=RedirectResponse)
 async def root(): return RedirectResponse("/wizard/1")
@@ -79,10 +80,17 @@ async def w3_get(request: Request):
     })
 
 @app.post("/wizard/3", response_class=RedirectResponse)
-async def w3_post(request: Request, recursos_json: str = Form(...), menus_json: str = Form(...)):
+async def w3_post(request: Request, recursos_json: str = Form(...), menu_pai: str = Form(...), extra_dashboard: Optional[str] = Form(None)):
     try:
         request.session["step3_recursos"] = json.loads(recursos_json)
-        request.session["step3_menus"]    = json.loads(menus_json)
+        request.session["menu_pai"] = menu_pai
+        
+        # Gerencia extras
+        extras = []
+        if extra_dashboard == "true":
+            extras.append("dashboard")
+        request.session["extras"] = extras
+        
     except Exception as e:
         flash(request, f"Erro: {e}")
         return RedirectResponse("/wizard/3", status_code=303)
@@ -92,7 +100,7 @@ async def w3_post(request: Request, recursos_json: str = Form(...), menus_json: 
 async def w4_get(request: Request):
     deploy_cfg = get_deploy_cfg()
     deploy_ativo = deploy_cfg is not None and deploy_cfg.auto_deploy
-    valido, motivo = deploy_cfg.valido() if deploy_cfg else (False, "deploy.cfg nÃÂ£o encontrado")
+    valido, motivo = deploy_cfg.valido() if deploy_cfg else (False, "deploy.cfg nÃƒÂƒÃ‚Â£o encontrado")
     return templates.TemplateResponse(request, "wizard/step4.html", context={
         "flashes":      get_flashes(request),
         "step1":        request.session.get("step1", {}),
@@ -103,6 +111,7 @@ async def w4_get(request: Request):
         "deploy_aviso": motivo if not valido else "",
     })
 
+
 @app.post("/gerar")
 async def gerar_wizard(request: Request):
     try:
@@ -111,10 +120,17 @@ async def gerar_wizard(request: Request):
             "tabelas":  request.session.get("step2", []),
             "recursos": request.session.get("step3_recursos", []),
             "menus":    request.session.get("step3_menus", []),
+            "extras":   request.session.get("extras", []),
         }
+        print("[DEBUG] Payload para ModuloDefinicao:", payload)
         definicao = ModuloDefinicao(**payload)
+        # menu_pai pode ser passado separadamente para o template, se necessário
+        request.session["menu_pai"] = request.session.get("menu_pai")
     except ValidationError as e:
-        flash(request, f"Dados invÃ¡lidos: {e.error_count()} erro(s). Revise os passos anteriores.")
+        print("[VALIDATION ERROR]", e)
+        print("[VALIDATION DETAILS]", e.errors())
+        print("[DEBUG] Payload com erro:", payload)
+        flash(request, f"Dados inválidos: {e.error_count()} erro(s). Revise os passos anteriores.")
         return RedirectResponse("/wizard/4", status_code=303)
 
     gen       = ModuloSEIGenerator()
@@ -127,7 +143,7 @@ async def gerar_wizard(request: Request):
     except Exception:
         pass
 
-    # Ã¢ÂÂÃ¢ÂÂ Auto-deploy Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ Auto-deploy ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€
     deploy_result = None
     deploy_cfg = get_deploy_cfg()
     if deploy_cfg and deploy_cfg.auto_deploy:
@@ -140,7 +156,7 @@ async def gerar_wizard(request: Request):
     for k in ("step1", "step2", "step3_recursos", "step3_menus"):
         request.session.pop(k, None)
 
-    # Se deploy ativo, redireciona para pÃÂ¡gina de resultado
+    # Se deploy ativo, redireciona para pÃƒÂƒÃ‚Â¡gina de resultado
     if deploy_result:
         return RedirectResponse("/deploy/resultado", status_code=303)
 
@@ -152,7 +168,7 @@ async def gerar_wizard(request: Request):
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-# Ã¢ÂÂÃ¢ÂÂ Resultado do deploy Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ Resultado do deploy ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€
 
 @app.get("/deploy/resultado", response_class=HTMLResponse)
 async def deploy_resultado(request: Request):
@@ -163,7 +179,7 @@ async def deploy_resultado(request: Request):
         "r":       result_data,
     })
 
-# Ã¢ÂÂÃ¢ÂÂ Projetos Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ Projetos ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€
 
 @app.get("/projetos", response_class=HTMLResponse)
 async def projetos_list(request: Request):
@@ -176,7 +192,7 @@ async def projetos_list(request: Request):
 async def projeto_detalhe(request: Request, projeto_id: int):
     projeto = carregar_projeto(projeto_id)
     if not projeto:
-        flash(request, "Projeto nÃÂ£o encontrado.")
+        flash(request, "Projeto nÃƒÂƒÃ‚Â£o encontrado.")
         return RedirectResponse("/projetos", status_code=303)
     return templates.TemplateResponse(request, "projetos/detalhe.html", context={
         "flashes": get_flashes(request), "projeto": projeto,
@@ -186,7 +202,7 @@ async def projeto_detalhe(request: Request, projeto_id: int):
 async def projeto_carregar(request: Request, projeto_id: int):
     projeto = carregar_projeto(projeto_id)
     if not projeto:
-        flash(request, "Projeto nÃÂ£o encontrado.")
+        flash(request, "Projeto nÃƒÂƒÃ‚Â£o encontrado.")
         return RedirectResponse("/projetos", status_code=303)
     d = projeto["definicao"]
     request.session["step1"]          = {k: d[k] for k in ("nome","slug","namespace","descricao","versao","sei_versao_min","autor")}
@@ -199,10 +215,10 @@ async def projeto_carregar(request: Request, projeto_id: int):
 @app.post("/projetos/{projeto_id}/excluir", response_class=RedirectResponse)
 async def projeto_excluir(request: Request, projeto_id: int):
     excluir_projeto(projeto_id)
-    flash(request, "Projeto excluÃÂ­do.", "success")
+    flash(request, "Projeto excluÃƒÂƒÃ‚Â­do.", "success")
     return RedirectResponse("/projetos", status_code=303)
 
-# Ã¢ÂÂÃ¢ÂÂ API Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ API ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€ÃƒÂ¢Ã‚Â”Ã‚Â€
 
 @app.post("/api/gerar")
 async def api_gerar(definicao: ModuloDefinicao):
@@ -224,6 +240,7 @@ async def api_preview(request: Request):
             "tabelas":  request.session.get("step2", []),
             "recursos": request.session.get("step3_recursos", []),
             "menus":    request.session.get("step3_menus", []),
+            "extras":   request.session.get("extras", []),
         }
         definicao = ModuloDefinicao(**payload)
     except ValidationError as e:

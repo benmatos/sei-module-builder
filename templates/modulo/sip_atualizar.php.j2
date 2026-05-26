@@ -1,19 +1,103 @@
 <?php
 // Script de atualização SIP — {{ d.nome }}
+// Gerado por SEI Module Builder
 
-require_once dirname(dirname(dirname(dirname(__FILE__)))) . "/SIP.php";
+require_once dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))) . "/sip/web/Sip.php";
 
 try {
     $objInfraBanco = BancoSIP::getInstance();
+    $objInfraBanco->abrirConexao();
+
+    // 1. Buscar id_sistema do SEI
+    $row = $objInfraBanco->consultarSql("SELECT id_sistema FROM sistema WHERE sigla = 'SEI'");
+    if (!$row || count($row) == 0) {
+        echo "ERRO: Sistema SEI nao encontrado no SIP!\n";
+        exit(1);
+    }
+    $id_sistema = $row[0]['id_sistema'];
+    echo "id_sistema SEI = $id_sistema\n\n";
+
+    // 2. Registrar Recursos e Permissões
+    $id_perfil_adm = null;
+    $row_perfil = $objInfraBanco->consultarSql("SELECT id_perfil FROM perfil WHERE id_sistema = ? AND nome = 'Administrador'", array($id_sistema));
+    if ($row_perfil) $id_perfil_adm = $row_perfil[0]['id_perfil'];
+
     {% for recurso in d.recursos %}
-    // Recurso: {{ recurso.nome }}
-    echo "Recurso {{ recurso.nome }} processado.
-";
+    echo "Processando recurso: {{ recurso.nome }}\n";
+    $row = $objInfraBanco->consultarSql("SELECT id_recurso FROM recurso WHERE id_sistema = ? AND nome = ?", array($id_sistema, '{{ recurso.nome }}'));
+    if ($row) {
+        $id_recurso = $row[0]['id_recurso'];
+        echo "  [JA EXISTE] id_recurso = $id_recurso\n";
+    } else {
+        $row_max = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(id_recurso), 0) + 1 AS next_id FROM recurso");
+        $id_recurso = $row_max[0]['next_id'];
+        $objInfraBanco->executarSql(
+            "INSERT INTO recurso (id_recurso, id_sistema, nome, descricao, caminho, sin_ativo) VALUES (?, ?, ?, ?, ?, 'S')",
+            array($id_recurso, $id_sistema, '{{ recurso.nome }}', '{{ recurso.descricao }}', '{{ recurso.caminho or "controlador.php?acao=" ~ recurso.nome }}')
+        );
+        echo "  [CRIADO] id_recurso = $id_recurso\n";
+    }
+
+    // Vincular ao perfil Administrador se encontrado
+    if ($id_perfil_adm) {
+        $row_rel = $objInfraBanco->consultarSql("SELECT COUNT(*) as total FROM rel_perfil_recurso WHERE id_perfil = ? AND id_sistema = ? AND id_recurso = ?", array($id_perfil_adm, $id_sistema, $id_recurso));
+        if ($row_rel[0]['total'] == 0) {
+            $objInfraBanco->executarSql("INSERT INTO rel_perfil_recurso (id_perfil, id_sistema, id_recurso) VALUES (?, ?, ?)", array($id_perfil_adm, $id_sistema, $id_recurso));
+            echo "  [VINCULADO] Perfil Administrador\n";
+        }
+    }
+    echo "\n";
     {% endfor %}
-    echo "Script SIP concluido.
-";
+
+    // 3. Buscar menu principal do SEI
+    $row = $objInfraBanco->consultarSql("SELECT TOP 1 id_menu FROM menu WHERE id_sistema = ?", array($id_sistema));
+    if (!$row || count($row) == 0) {
+        echo "ERRO: Menu do SEI nao encontrado!\n";
+        exit(1);
+    }
+    $id_menu = $row[0]['id_menu'];
+
+    // 4. Criar item de menu do módulo (vinculado ao recurso principal)
+    $rotulo = '{{ d.nome }}';
+    $row_rec_main = $objInfraBanco->consultarSql("SELECT id_recurso FROM recurso WHERE id_sistema = ? AND nome = ?", array($id_sistema, '{{ d.slug }}'));
+    if (!$row_rec_main) {
+        // Se não tem recurso com o nome do slug, tenta o primeiro da lista
+        $row_rec_main = $objInfraBanco->consultarSql("SELECT id_recurso FROM recurso WHERE id_sistema = ? AND nome = ?", array($id_sistema, '{{ d.recursos[0].nome if d.recursos else "" }}'));
+    }
+    $id_recurso_menu = $row_rec_main ? $row_rec_main[0]['id_recurso'] : null;
+
+    $row = $objInfraBanco->consultarSql("SELECT id_item_menu FROM item_menu WHERE id_sistema = ? AND rotulo = ?", array($id_sistema, $rotulo));
+    if ($row && count($row) > 0) {
+        $id_item_menu = $row[0]['id_item_menu'];
+        echo "[JA EXISTE] Item de Menu: $rotulo (id: $id_item_menu)\n";
+    } else {
+        $id_item_menu_pai = {{ d.menu_pai|default(0)|int }};
+        if ($id_item_menu_pai == 0) $id_item_menu_pai = null;
+
+        $row_max = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(id_item_menu), 0) + 1 AS next_id FROM item_menu");
+        $id_item_menu = $row_max[0]['next_id'];
+
+        $row_seq = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(sequencia), 0) + 1 AS next_seq FROM item_menu WHERE id_menu_pai = ? AND id_item_menu_pai " . ($id_item_menu_pai ? "= ?" : "IS NULL") . " AND id_sistema = ?", 
+            $id_item_menu_pai ? array($id_menu, $id_item_menu_pai, $id_sistema) : array($id_menu, $id_sistema));
+        $sequencia = $row_seq[0]['next_seq'];
+
+        $objInfraBanco->executarSql(
+            "INSERT INTO item_menu (id_item_menu, id_menu, id_menu_pai, id_item_menu_pai, id_sistema, id_recurso, rotulo, descricao, sin_nova_janela, sin_ativo, sequencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'N', 'S', ?)",
+            array($id_item_menu, $id_menu, $id_menu, $id_item_menu_pai, $id_sistema, $id_recurso_menu, $rotulo, 'Acesso ao módulo ' . $rotulo, $sequencia)
+        );
+        echo "[CRIADO] Item de Menu: $rotulo (id: $id_item_menu, sequencia: $sequencia)\n";
+        
+        // Vincular item de menu ao perfil Administrador
+        if ($id_perfil_adm && $id_recurso_menu) {
+            $objInfraBanco->executarSql("INSERT INTO rel_perfil_item_menu (id_perfil, id_sistema, id_menu, id_item_menu, id_recurso) VALUES (?, ?, ?, ?, ?)",
+                array($id_perfil_adm, $id_sistema, $id_menu, $id_item_menu, $id_recurso_menu));
+            echo "  [VINCULADO] Menu -> Perfil Administrador\n";
+        }
+    }
+
+    echo "\nScript SIP concluido com sucesso.\n";
+    $objInfraBanco->fecharConexao();
 } catch (Exception $e) {
-    echo "ERRO SIP: " . $e->getMessage() . "
-";
+    echo "ERRO SIP: " . $e->getMessage() . "\n";
     exit(1);
 }

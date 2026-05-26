@@ -3,34 +3,22 @@
 
 class {{ ns }}{{ tnome }}DTO extends InfraDTO {
 
-    public function __construct() {
-        parent::__construct('{{ tabela.nome }}', '{{ tabela.alias }}');
+    public function getStrNomeTabela() {
+        return '{{ tabela.nome }}';
     }
 
-    protected function inicializarPropriedades() {
+    public function montar() {
         {% for col in tabela.colunas %}
-        $this->adicionarPropriedade(
-            InfraMapeamento::criarPropriedade('{{ col.nome | pascalcase }}', '{{ tabela.alias }}.{{ col.nome }}')
-                ->definirTipo({{ col.tipo | tipo_infrabanco }})
-                {% if col.chave_primaria %}->definirChavePrimaria(){% endif %}
-                {% if not col.obrigatorio %}->definirOpcional(){% endif %}
-        );
-        {% if col.fk %}
-        // FK → {{ col.fk.tabela_slug }}.{{ col.fk.coluna_pai }}
-        $objFK = new InfraDTO();
-        $objFK->adicionarMapeamento(
-            InfraMapeamento::criarPropriedade('Str{{ col.fk.coluna_pai | pascalcase }}', '{{ col.fk.tabela_slug }}.{{ col.fk.coluna_pai }}')
-        );
-        {% for exibir in col.fk.colunas_exibir %}
-        $objFK->adicionarMapeamento(
-            InfraMapeamento::criarPropriedade('Str{{ exibir | pascalcase }}', '{{ col.fk.tabela_slug }}.{{ exibir }}')
-        );
-        {% endfor %}
-        $this->adicionarPropriedade(
-            InfraMapeamento::criarPropriedadeObjeto('Obj{{ col.fk.tabela_slug | pascalcase }}', $objFK)
-                ->definirOpcional()
-        );
+        {% set prefix = 'InfraDTO::$PREFIXO_STR' %}
+        {% if col.tipo == 'int' or col.tipo == 'bigint' %}{% set prefix = 'InfraDTO::$PREFIXO_NUM' %}
+        {% elif col.tipo == 'decimal(15,2)' %}{% set prefix = 'InfraDTO::$PREFIXO_NUM' %}
+        {% elif col.tipo == 'date' %}{% set prefix = 'InfraDTO::$PREFIXO_DTA' %}
+        {% elif col.tipo == 'datetime' %}{% set prefix = 'InfraDTO::$PREFIXO_DTH' %}
         {% endif %}
+        $this->adicionarAtributoTabela({{ prefix }}, '{{ col.nome | pascalcase }}', '{{ col.nome }}');
         {% endfor %}
+
+        {% set pk_col = (tabela.colunas | selectattr("chave_primaria") | first) or tabela.colunas[0] %}
+        $this->configurarPK('{{ pk_col.nome | pascalcase }}', InfraDTO::$TIPO_PK_NATIVA);
     }
 }

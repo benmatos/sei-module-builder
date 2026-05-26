@@ -18,9 +18,9 @@ class ModuloSEIGenerator:
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
             self._adicionar_integracao(zf, definicao)
             self._adicionar_dtos(zf, definicao)
+            self._adicionar_bds(zf, definicao)
             self._adicionar_rns(zf, definicao)
-            self._adicionar_controllers(zf, definicao)
-            self._adicionar_views(zf, definicao)
+            self._adicionar_telas(zf, definicao)
             self._adicionar_scripts(zf, definicao)
             self._adicionar_docs(zf, definicao)
             self._adicionar_config(zf, definicao)
@@ -37,19 +37,22 @@ class ModuloSEIGenerator:
             tn = to_pascal_case(t.nome)
             resultado[f"{ns}{tn}DTO.php"]        = self._render("dto.php.j2",        d=definicao, ns=ns, tabela=t, tnome=tn)
             resultado[f"{ns}{tn}RN.php"]         = self._render("rn.php.j2",         d=definicao, ns=ns, tabela=t, tnome=tn)
-            resultado[f"{ns}{tn}Controller.php"] = self._render("controller.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{ns}{tn}BD.php"]         = self._render("bd.php.j2",         d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{definicao.slug}_{t.nome}_listar.php"] = self._render("tela_listar.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
         resultado["sei_atualizar.php"]           = self._render("sei_atualizar.php.j2",    d=definicao)
         resultado["ConfiguracaoSEI.exemplo.php"] = self._render("configuracao_sei.php.j2", d=definicao, ns=ns)
         resultado["README.md"]                   = self._render("README.md.j2", d=definicao)
         if definicao.extras:
             t0  = definicao.tabelas[0] if definicao.tabelas else None
             tn0 = to_pascal_case(t0.nome) if t0 else "Tabela"
-            for _, tmpl, label in self._extra_templates(definicao, t0, tn0, ns):
+            for feature, tmpl, label in self._extra_templates(definicao, t0, tn0, ns):
                 try:
+                    # Carrega do env_extras
                     resultado[label] = self.env_extras.get_template(tmpl).render(
                         d=definicao, ns=ns, tabela=t0, tnome=tn0
                     )
-                except Exception:
+                except Exception as e:
+                    print(f"[DEBUG] Erro ao renderizar extra {tmpl}: {e}")
                     pass
         return resultado
 
@@ -64,7 +67,8 @@ class ModuloSEIGenerator:
                 content = self.env_extras.get_template(tmpl).render(
                     d=d, ns=ns, tabela=t0, tnome=tn0
                 )
-                self._write(zf, f"{d.slug}/src/extras/{label}", content)
+                # Garante que os extras fiquem na pasta 'extras' dentro do módulo
+                self._write(zf, f"{d.slug}/extras/{label}", content)
             except Exception:
                 pass
 
@@ -103,42 +107,43 @@ class ModuloSEIGenerator:
 
     def _write(self, zf, path, content):
         self.ultimo_arquivo_count.append(path)
-        zf.writestr(path, content.encode("utf-8"))
+        # SEI 5.x utiliza ISO-8859-1 por padrão
+        zf.writestr(path, content.encode("iso-8859-1", errors="replace"))
 
     def _adicionar_integracao(self, zf, d):
         ns = to_pascal_case(d.namespace)
-        self._write(zf, f"{d.slug}/src/{ns}Integracao.php", self._render("integracao.php.j2", d=d, ns=ns))
+        self._write(zf, f"{d.slug}/{ns}Integracao.php", self._render("integracao.php.j2", d=d, ns=ns))
 
     def _adicionar_dtos(self, zf, d):
         ns = to_pascal_case(d.namespace)
         for t in d.tabelas:
             tn = to_pascal_case(t.nome)
-            self._write(zf, f"{d.slug}/src/db/dto/{ns}{tn}DTO.php", self._render("dto.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
+            self._write(zf, f"{d.slug}/dto/{ns}{tn}DTO.php", self._render("dto.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
 
     def _adicionar_rns(self, zf, d):
         ns = to_pascal_case(d.namespace)
         for t in d.tabelas:
             tn = to_pascal_case(t.nome)
-            self._write(zf, f"{d.slug}/src/db/rn/{ns}{tn}RN.php", self._render("rn.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
+            self._write(zf, f"{d.slug}/rn/{ns}{tn}RN.php", self._render("rn.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
 
-    def _adicionar_controllers(self, zf, d):
+    def _adicionar_bds(self, zf, d):
         ns = to_pascal_case(d.namespace)
         for t in d.tabelas:
             tn = to_pascal_case(t.nome)
-            self._write(zf, f"{d.slug}/src/web/controller/{ns}{tn}Controller.php", self._render("controller.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
+            self._write(zf, f"{d.slug}/bd/{ns}{tn}BD.php", self._render("bd.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
 
-    def _adicionar_views(self, zf, d):
+    def _adicionar_telas(self, zf, d):
         ns = to_pascal_case(d.namespace)
         for t in d.tabelas:
             tn = to_pascal_case(t.nome)
             for view in ("listar", "cadastrar"):
-                self._write(zf, f"{d.slug}/src/web/view/{d.slug}_{t.nome}_{view}.php",
-                            self._render(f"view_{view}.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
-        self._write(zf, f"{d.slug}/src/web/js/{d.slug}.js", self._render("js.js.j2", d=d))
+                self._write(zf, f"{d.slug}/{d.slug}_{t.nome}_{view}.php",
+                            self._render(f"tela_{view}.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
+        self._write(zf, f"{d.slug}/js/{d.slug}.js", self._render("js.js.j2", d=d))
 
     def _adicionar_scripts(self, zf, d):
         for s in ("sei_atualizar", "sip_atualizar"):
-            self._write(zf, f"{d.slug}/src/scripts/{s}.php", self._render(f"{s}.php.j2", d=d))
+            self._write(zf, f"{d.slug}/scripts/{s}.php", self._render(f"{s}.php.j2", d=d))
 
     def _adicionar_docs(self, zf, d):
         for doc in ("README", "INSTALL", "USAGE"):
@@ -146,5 +151,8 @@ class ModuloSEIGenerator:
 
     def _adicionar_config(self, zf, d):
         ns = to_pascal_case(d.namespace)
-        self._write(zf, f"{d.slug}/config/ConfiguracaoSEI.exemplo.php",
-                    self._render("configuracao_sei.php.j2", d=d, ns=ns))
+        self._write(
+            zf,
+            f"{d.slug}/config/ConfiguracaoSEI.exemplo.php",
+            self._render("configuracao_sei.php.j2", d=d, ns=ns)
+        )

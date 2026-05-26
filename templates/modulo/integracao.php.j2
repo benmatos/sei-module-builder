@@ -1,13 +1,23 @@
 <?php
-// {{ d.nome }} — Integração
+// {{ d.nome }} â IntegraÃ§Ã£o
 // Gerado por SEI Module Builder v{{ d.versao }}
 
-class {{ ns }}Integracao extends InfraIntegracao {
+class {{ ns }}Integracao extends SeiIntegracao {
 
     public function getNome() { return '{{ d.nome }}'; }
     public function getDescricao() { return '{{ d.descricao }}'; }
     public function getVersao() { return '{{ d.versao }}'; }
+    public function getInstituicao() { return '{{ d.autor }}'; }
     public function getVersaoSEIRequerida() { return '{{ d.sei_versao_min }}'; }
+
+    public function inicializar($strVersaoSEI) {
+        $strDir = dirname(__FILE__);
+        infraAdicionarPath($strDir);
+        infraAdicionarPath($strDir . '/rn');
+        infraAdicionarPath($strDir . '/dto');
+        infraAdicionarPath($strDir . '/bd');
+    }
+
 
     public function getMenus() {
         $arrMenus = array();
@@ -28,5 +38,27 @@ class {{ ns }}Integracao extends InfraIntegracao {
             array('nome' => '{{ recurso.nome }}', 'descricao' => '{{ recurso.descricao }}'),
             {% endfor %}
         );
+    }
+    public function adicionarElementoMenu() {
+        $strMenu = '';
+        {% if "dashboard" in d.extras %}
+        if (SessaoSEI::getInstance()->verificarPermissao('md_dashboard_visualizar')) {
+            $strLink = SessaoSEI::getInstance()->assinarLink('controlador.php?acao=md_dashboard_visualizar');
+            $strMenu .= '<li><a href="' . $strLink . '" class="infraMenuFilho"><div class="infraItemMenu"><div class="infraRotuloMenu">Dashboard</div></div></a></li>';
+        }
+        {% endif %}
+        return $strMenu != '' ? $strMenu : null;
+    }
+
+    public function processarControlador($strAcao) {
+        if (!$strAcao) return false;
+        switch ($strAcao) {
+            {% if "dashboard" in d.extras %}
+            case 'md_dashboard_visualizar':
+                require_once dirname(__FILE__) . '/extras/{{ d.slug }}_dashboard.php';
+                return true;
+            {% endif %}
+        }
+        return false;
     }
 }

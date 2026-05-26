@@ -7,19 +7,14 @@ from pydantic import BaseModel, field_validator, model_validator
 class ColunaFK(BaseModel):
     tabela_slug: str
     coluna: str
-    coluna_pai: str
-    colunas_exibir: List[str] = []
+    coluna_desc: Optional[str] = None
 
 
 class ColunaDTO(BaseModel):
     nome: str
-    tipo: Literal[
-        "varchar(100)", "varchar(255)", "text",
-        "int", "bigint", "decimal(15,2)",
-        "date", "datetime", "char(1)"
-    ]
-    obrigatorio: bool = True
+    tipo: Literal["int", "bigint", "varchar(100)", "varchar(255)", "text", "decimal(15,2)", "date", "datetime", "char(1)"]
     chave_primaria: bool = False
+    obrigatorio: bool = True
     fk: Optional[ColunaFK] = None
 
 
@@ -28,24 +23,32 @@ class TabelaDTO(BaseModel):
     alias: str
     colunas: List[ColunaDTO]
 
+    @field_validator("colunas")
+    @classmethod
+    def tabela_deve_ter_colunas(cls, v: List[ColunaDTO]) -> List[ColunaDTO]:
+        if not v:
+            raise ValueError("A tabela deve ter pelo menos uma coluna")
+        return v
+
     @field_validator("nome")
     @classmethod
-    def nome_deve_comecar_com_md(cls, v: str) -> str:
-        if not v.startswith("md_"):
-            raise ValueError(f"Nome de tabela deve começar com 'md_': {v}")
+    def validar_nome_tabela(cls, v: str) -> str:
+        if not re.match(r"^md_[a-z0-9_]+$", v):
+            raise ValueError("O nome da tabela deve começar com 'md_' e conter apenas minúsculas, números e sublinhados")
         return v
 
 
 class RecursoDTO(BaseModel):
     nome: str
     descricao: str
+    caminho: Optional[str] = None # Tornar opcional, mas vamos preencher se possível
 
 
 class MenuDTO(BaseModel):
     titulo: str
     link: str
-    icone: str
-    perfil_requerido: str
+    icone: str = "pasta"
+    perfil_requerido: str = "Todos"
 
 
 class ModuloDefinicao(BaseModel):
@@ -54,45 +57,31 @@ class ModuloDefinicao(BaseModel):
     namespace: str
     descricao: str
     versao: str
-    sei_versao_min: str
-    autor: str
-    tabelas: List[TabelaDTO]
-    recursos: List[RecursoDTO]
-    menus: List[MenuDTO]
-    extras: List[Literal["workflow", "exportacao", "dashboard", "job", "sip"]] = []
+    sei_versao_min: str = "4.0.0"
+    autor: str = "SEI Module Builder"
+    tabelas: List[TabelaDTO] = []
+    recursos: List[RecursoDTO] = []
+    menus: List[MenuDTO] = []
+    extras: List[str] = []
+    menu_pai: int = 0
 
     @field_validator("slug")
     @classmethod
-    def slug_valido(cls, v: str) -> str:
-        if not re.match(r"^[a-z][a-z0-9_]+$", v):
-            raise ValueError("Slug deve ser alfanumérico com underscores")
+    def validar_slug(cls, v: str) -> str:
+        if not re.match(r"^mod_[a-z0-9_]+$", v):
+            raise ValueError("O slug do módulo deve começar com 'mod_' e conter apenas minúsculas, números e sublinhados")
         return v
-
-    @field_validator("versao", "sei_versao_min")
-    @classmethod
-    def versao_semver(cls, v: str) -> str:
-        if not re.match(r"^[0-9]+([.][0-9]+)*$", v):
-            raise ValueError(f"Versão deve ter formato numérico (ex: 1, 1.0, 1.0.0): {v}")
-        return v
-
-    @model_validator(mode="after")
-    def validar_aliases_unicos(self) -> "ModuloDefinicao":
-        aliases = [t.alias for t in self.tabelas]
-        if len(aliases) != len(set(aliases)):
-            raise ValueError("Aliases de tabela devem ser únicos")
-        return self
 
     @model_validator(mode="after")
     def validar_fks(self) -> "ModuloDefinicao":
-        slugs_conhecidos = {t.nome for t in self.tabelas}
-        tabelas_sei_nativas = {"usuario", "unidade", "tipo_processo", "serie", "contato"}
+        tabelas_validas = {t.nome for t in self.tabelas}
+        tabelas_sei_nativas = {"documento", "procedimento", "unidade", "usuario", "protocolo"}
+
         for tabela in self.tabelas:
             for col in tabela.colunas:
                 if col.fk:
                     slug_ref = col.fk.tabela_slug
-                    if slug_ref.startswith("sei:"):
-                        continue
-                    if slug_ref not in slugs_conhecidos and slug_ref not in tabelas_sei_nativas:
+                    if slug_ref not in tabelas_validas and slug_ref not in tabelas_sei_nativas:
                         raise ValueError(
                             f"FK em {tabela.nome}.{col.nome} referencia tabela não declarada: {slug_ref}"
                         )

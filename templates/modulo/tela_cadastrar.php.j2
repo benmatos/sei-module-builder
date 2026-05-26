@@ -1,0 +1,51 @@
+<?php
+// Tela de Cadastro: {{ tabela.nome }} — Gerado por SEI Module Builder
+
+try {
+    $objPaginaSEI = PaginaSEI::getInstance();
+    $strTitulo = 'Cadastro de {{ tabela.nome | pascalcase }}';
+
+    $objPaginaSEI->montarDocType();
+    $objPaginaSEI->abrirHtml();
+    $objPaginaSEI->abrirHead();
+    $objPaginaSEI->montarMeta();
+    $objPaginaSEI->montarTitle($objPaginaSEI->getStrNomeSistema() . ' - ' . $strTitulo);
+    $objPaginaSEI->montarStyle();
+    $objPaginaSEI->montarJavaScript();
+    $objPaginaSEI->fecharHead();
+    $objPaginaSEI->abrirBody($strTitulo);
+
+    // Lógica de carregamento para alteração
+    $obj{{ tnome }}DTO = new {{ ns }}{{ tnome }}DTO();
+    if (isset($_GET['id'])) {
+        $obj{{ tnome }}RN = new {{ ns }}{{ tnome }}RN();
+        $obj{{ tnome }}DTO->setNum{{ (tabela.colunas | selectattr("chave_primaria") | first).nome | pascalcase or tabela.colunas[0].nome | pascalcase }}($_GET['id']);
+        $obj{{ tnome }}DTO->retTodos();
+        $obj{{ tnome }}DTO = $obj{{ tnome }}RN->consultar($obj{{ tnome }}DTO);
+    }
+
+    ?>
+    <div class="infraAreaDados">
+        <form method="post" action="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_salvar">
+            {% for col in tabela.colunas %}
+            <div class="infraDivLabel">
+                <label class="infraLabel">{{ col.nome | pascalcase }}:</label>
+                <input type="text" name="txt{{ col.nome | pascalcase }}" class="infraText" 
+                       value="<?php echo htmlspecialchars($obj{{ tnome }}DTO->get{{ col.nome | pascalcase }}() ?? ''); ?>"/>
+            </div>
+            {% endfor %}
+            
+            <div style="margin-top: 20px;">
+                <button type="submit" class="infraButton">Salvar</button>
+                <a href="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_listar" class="infraButton">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <?php
+
+    $objPaginaSEI->fecharBody();
+    $objPaginaSEI->fecharHtml();
+
+} catch (Exception $e) {
+    PaginaSEI::getInstance()->processarExcecao($e);
+}

@@ -12,25 +12,63 @@
     </div>
   </template>
   <button type="button" @click="recursos.push({nome:'',descricao:''})" class="text-blue-600 text-sm mb-4">+ Recurso</button>
-  <h2 class="font-semibold mb-2">Menus</h2>
-  <template x-for="(m, i) in menus" :key="i">
-    <div class="flex gap-2 mb-2 flex-wrap">
-      <input x-model="m.titulo" placeholder="Título" class="border rounded px-2 py-1 flex-1"/>
-      <input x-model="m.link" placeholder="link_action" class="border rounded px-2 py-1 flex-1"/>
-      <input x-model="m.icone" placeholder="fa-list" class="border rounded px-2 py-1 w-32"/>
-      <input x-model="m.perfil_requerido" placeholder="Básico" class="border rounded px-2 py-1 w-28"/>
-      <button type="button" @click="menus.splice(i,1)" class="text-red-400">✕</button>
-    </div>
-  </template>
-  <button type="button" @click="menus.push({titulo:'',link:'',icone:'',perfil_requerido:''})" class="text-blue-600 text-sm mb-4">+ Menu</button>
+  <div class="mb-6 p-4 bg-blue-50 border border-blue-100 rounded">
+    <h2 class="font-semibold mb-2 flex items-center gap-2">
+      <span>📊</span> Recursos Extras
+    </h2>
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" name="extra_dashboard" value="true" class="w-4 h-4">
+      <span class="text-sm font-medium text-gray-700">Incluir Dashboard de Estatísticas</span>
+    </label>
+    <p class="text-xs text-gray-500 mt-1 ml-6">Gera automaticamente uma tela com gráficos baseados nas tabelas do módulo.</p>
+  </div>
+
+  <h2 class="font-semibold mb-2">Menu Pai do Novo Módulo</h2>
+  <div class="mb-4">
+    <label for="menu_pai" class="block text-sm font-medium text-gray-700 mb-1">Selecione o menu pai onde o novo módulo será exibido:</label>
+    <select id="menu_pai" name="menu_pai" class="border rounded px-2 py-1 w-full" required>
+      <option value="100005464">Relatórios</option>
+      <option value="100005471">Administração</option>
+    </select>
+  </div>
   <input type="hidden" name="recursos_json" :value="JSON.stringify(recursos)"/>
-  <input type="hidden" name="menus_json" :value="JSON.stringify(menus)"/>
   <div class="flex gap-3">
-    <a href="/wizard/2" class="border px-4 py-2 rounded">← Voltar</a>
-    <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800">Próximo →</button>
+    <a href="/wizard/2" class="border px-4 py-2 rounded">&#8592; Voltar</a>
+    <button type="submit" class="bg-blue-700 text-white px-6 py-2 rounded hover:bg-blue-800">Próximo &#8594;</button>
   </div>
 </form>
 <script>
-function rmApp(){return{recursos:[],menus:[],init(){try{this.recursos=JSON.parse({{ recursos_json|tojson }});this.menus=JSON.parse({{ menus_json|tojson }});}catch(e){}}}}
+function rmApp(){
+  return {
+    recursos: [],
+    menus: [],
+    init() {
+      try {
+        this.recursos = JSON.parse({{ recursos_json|tojson }});
+        this.menus    = JSON.parse({{ menus_json|tojson }});
+      } catch(e) {}
+    },
+    enviarForm(e) {
+      if (this.recursos.length === 0 || !document.getElementById('menu_pai').value) {
+        alert('Adicione pelo menos um recurso e selecione o menu pai para continuar.');
+        return;
+      }
+      e.target.submit();
+    }
+  }
+}
+document.addEventListener('alpine:init', () => {
+  Alpine.data('rmApp', rmApp);
+});
+document.querySelector('form[method="POST"]').addEventListener('submit', function(e) {
+  if (typeof rmApp === 'function') {
+    const app = rmApp();
+    app.recursos = JSON.parse(document.querySelector('[name="recursos_json"]').value || '[]');
+    if (app.recursos.length === 0 || !document.getElementById('menu_pai').value) {
+      e.preventDefault();
+      alert('Adicione pelo menos um recurso e selecione o menu pai para continuar.');
+    }
+  }
+});
 </script>
 {% endblock %}
