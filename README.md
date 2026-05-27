@@ -1,172 +1,101 @@
 # SEI Module Builder
 
-Gerador de módulos para o **SEI (Sistema Eletrônico de Informações)** — cria automaticamente a estrutura completa de diretórios e arquivos PHP de um novo módulo, seguindo a arquitetura oficial do guia SEI-Modulos-v3.0.
+Gerador de módulos para o **SEI (Sistema Eletrônico de Informações)** — cria automaticamente a estrutura completa de diretórios e arquivos PHP de um novo módulo, seguindo os padrões e especificações do **manual oficial Versão 5.0**.
 
 ---
 
 ## Visão Geral
 
-O SEI Module Builder elimina o trabalho repetitivo de scaffolding, reduz erros de convenção e padroniza a criação de módulos InfraPHP. O desenvolvedor preenche um wizard de 4 passos e obtém um módulo completo — com DTOs, RNs, controllers, views, scripts de banco e documentação — pronto para instalação.
-
-Em ambiente de desenvolvimento, o módulo pode ser **deployado automaticamente** no SEI local logo após a geração, sem nenhuma etapa manual.
+O SEI Module Builder elimina o trabalho repetitivo de scaffolding, reduz erros de convenção e padroniza a criação de módulos InfraPHP. O desenvolvedor preenche um wizard e obtém um módulo completo — com DTOs, RNs, BDs, controllers, views, scripts de banco e documentação — pronto para instalação e em total conformidade com o **SDD (Spec-Driven Development)** do SEI.
 
 ---
 
-## Funcionalidades
+## Funcionalidades e Conformidade (GEMINI.md)
 
 | Funcionalidade | Descrição |
 |---|---|
-| Wizard 4 passos | Metadados → Tabelas → Recursos/Menus → Revisão |
-| Drag-and-drop | Reordenação de tabelas e colunas no passo 2 (SortableJS) |
-| Preview de código | Syntax highlight dos arquivos gerados antes de confirmar (highlight.js) |
-| Geração de ZIP | Módulo completo com estrutura `mod-sei-pen`-compatível |
-| Auto-deploy local | Deploy automático no SEI de desenvolvimento após a geração |
-| Persistência SQLite | Histórico de projetos e gerações com carregamento/reutilização |
-| Export/Import JSON | Salve e restaure definições de módulos em arquivos JSON |
-| Limpeza de Menus | Remoção automática de itens de menu antigos no SIP antes da recriação |
-| API REST | Endpoints `/api/gerar`, `/api/validar` e `/api/preview` para integração |
+| **Arquitetura 5.0** | Gera pastas obrigatórias: `bd/`, `dto/`, `rn/`, `int/`, `css/`, `js/`, `imagens/`, `scripts/`, `ws/`. |
+| **Validação SDD** | Enforce rigoroso de prefixos: `id_` (PK/FK), `sin_`/`sta_` (char 1), `dta_` (date), `dth_` (datetime), `din_` (decimal). |
+| **Namespace SEI** | Garante o uso do prefixo `Md` em Namespaces (ex: `MdMgi`). |
+| **Ações & Recursos** | Geração automática de recursos SIP (`listar`, `cadastrar`, `salvar`, `alterar`, `excluir`) para cada tabela. |
+| **Wizard Proativo** | Validação em tempo real em cada passo do wizard para evitar inconsistências arquiteturais. |
+| **Módulos de Interface** | Suporte total para módulos sem tabelas próprias (ex: Dashboards que consomem dados nativos). |
+| **Auto-deploy local** | Backup, extração, patch de configuração e execução de scripts de banco automáticos no SEI dev. |
+| **Preview de código** | Visualização dos arquivos `.php` gerados antes da confirmação final. |
 
 ---
 
-## Arquitetura
+## Arquitetura do Projeto
 
 ```
 sei-module-builder/
 ├── main.py            # FastAPI — rotas wizard, projetos, API e auto-deploy
-├── models.py          # Modelos Pydantic (ModuloDefinicao, TabelaDTO, ColunaFK…)
-├── generator.py       # ModuloSEIGenerator — renderiza Jinja2 e empacota ZIP
-├── deploy.py          # DeployLocal — instala módulo direto no SEI dev
-├── database.py        # SQLite — projetos e histórico de gerações
-├── utils.py           # Filtros Jinja2: pascalcase, camelcase, tipo_infrabanco
-├── deploy.cfg.example # Configuração de caminhos do SEI local
-├── requirements.txt
+├── models.py          # Modelos Pydantic com validação rigorosa SEI 5.0
+├── generator.py       # ModuloSEIGenerator — lógica de scaffolding e pacotes ZIP
+├── deploy.py          # DeployLocal — automação de instalação no SEI local
+├── database.py        # SQLite — persistência de projetos e histórico
+├── utils.py           # Filtros Jinja2 e utilitários de nomenclatura
+├── GEMINI.md          # Especificação técnica e padrões de desenvolvimento
 ├── templates/
 │   ├── base.html
 │   ├── wizard/        # step1–step4
-│   ├── projetos/      # index, detalhe, importar
-│   ├── deploy/        # resultado
-│   └── modulo/        # Templates .php.j2 e .md.j2 de saída
-└── static/
-```
-
-### Fluxo de geração + deploy
-
-```
-Wizard (4 passos)
-      │
-      ▼ POST /gerar
-ModuloDefinicao (Pydantic)
-      │
-      ├─► ModuloSEIGenerator → ZIP em memória
-      │         │
-      │         └─► DeployLocal.deploy_from_bytes()
-      │                   ├── Backup do módulo existente
-      │                   ├── Extração no modulos_dir
-      │                   ├── Patch ConfiguracaoSEI.php
-      │                   ├── php sei_atualizar.php
-      │                   └── php sip_atualizar.php (com limpeza de menus)
-      │
-      └─► /deploy/resultado  (ou download do ZIP se deploy inativo)
+│   └── modulo/        # Templates baseados no framework Infra do SEI
+└── tests/             # Suíte de testes unitários e de integração
 ```
 
 ---
 
-## Instalação
+## Mapeamento de Tipos e Prefixos Obrigatórios
 
-**Requisitos:** Python 3.11+, PHP CLI disponível no PATH (para deploy local).
+O builder garante que o modelo de dados siga estritamente as convenções do SEI:
+
+| Tipo | Prefixo | Exemplo | Tipo SQL |
+| :--- | :--- | :--- | :--- |
+| **PK / FK** | `id_` | `id_pedido` | `int` / `bigint` |
+| **Sinalizador** | `sin_` | `sin_ativo` | `char(1)` ('S' ou 'N') |
+| **Status** | `sta_` | `sta_pedido` | `char(1)` |
+| **Data** | `dta_` | `dta_entrega` | `date` |
+| **Data e Hora** | `dth_` | `dth_registro` | `datetime` |
+| **Monetário** | `din_` | `din_valor` | `decimal(15,2)` |
+
+---
+
+## Instalação e Uso
+
+**Requisitos:** Python 3.11+, PHP CLI disponível no PATH.
 
 ```bash
 git clone https://github.com/benmatos/sei-module-builder.git
 cd sei-module-builder
 pip install -r requirements.txt
-```
-
-**Configurar deploy local (opcional):**
-
-```bash
-cp deploy.cfg.example deploy.cfg
-# Editar modulos_dir e configuracao_sei com os caminhos do SEI local
-```
-
-**Iniciar:**
-
-```bash
+cp deploy.cfg.example deploy.cfg # Opcional: para deploy local
 uvicorn main:app --reload
-# Acesse http://localhost:8000
 ```
 
----
-
-## Uso
-
-### Wizard (interface web)
-
+### Fluxo de Trabalho:
 1. Acesse `http://localhost:8000`
-2. **Passo 1 (Metadados)**: Nome, slug, namespace e seleção de templates opcionais (Workflow, Exportação, Dashboard, etc).
-3. **Passo 2 (Tabelas)**: Definição da estrutura de dados com drag-and-drop para ordenação.
-4. **Passo 3 (Recursos/Menus)**: Definição de recursos obrigatórios, seleção do Menu Pai (**Relatórios** ou **Administração**) e submenus opcionais.
-5. **Passo 4 (Revisão)**: Validação final dos dados e preview do código gerado.
-6. Clique **Gerar e Deployar** (com deploy ativo) ou **Gerar Módulo (ZIP)**.
-
-### Exportação e Importação
-
-Agora é possível salvar o estado do seu projeto em um arquivo JSON:
-- No Passo 1, use o link "ou importar JSON de projeto existente".
-- Na lista de projetos, utilize o botão de exportação para baixar o arquivo JSON do módulo.
+2. **Passo 1**: Defina metadados (Namespace deve começar com `Md`).
+3. **Passo 2**: Defina tabelas (Opcional). O Builder valida prefixos de colunas automaticamente.
+4. **Passo 3**: Escolha o Menu Pai. Recursos de segurança são gerados automaticamente.
+5. **Passo 4**: Revise o código e baixe o ZIP ou execute o Deploy.
 
 ---
 
 ## Scripts SIP e Limpeza de Menus
 
-Os scripts de atualização do SIP gerados pelo Builder possuem inteligência para:
-- **Evitar duplicidade**: Antes de criar um item de menu, o script verifica se ele já existe e o remove (limpando também as permissões associadas).
-- **Hierarquia dinâmica**: O item de menu principal é criado sob o menu pai selecionado no wizard.
+Os scripts gerados realizam a limpeza automática de itens de menu antigos antes de recriá-los, facilitando o ciclo de desenvolvimento e evitando "lixo" no banco de dados do SIP durante testes repetitivos.
 
 ---
 
-## Mapeamento de tipos
+## Roadmap ✅
 
-| Tipo SQL | Constante InfraBanco |
-|---|---|
-| `varchar(100)` / `varchar(255)` | `InfraBanco::TIPO_TEXTO_CURTO` |
-| `text` | `InfraBanco::TIPO_TEXTO_LONGO` |
-| `int` / `bigint` | `InfraBanco::TIPO_INTEIRO` |
-| `decimal(15,2)` | `InfraBanco::TIPO_DECIMAL` |
-| `date` | `InfraBanco::TIPO_DATA` |
-| `datetime` | `InfraBanco::TIPO_DATA_HORA` |
-| `char(1)` | `InfraBanco::TIPO_TEXTO_FIXO` |
-
----
-
-## Roadmap
-
-### Concluído ✅
-
-- [x] Wizard 4 passos com validação Pydantic
-- [x] Seleção de Menu Pai (Relatórios/Administração) no Passo 3
-- [x] Limpeza automática de menus no `sip_atualizar.php`
-- [x] Export/import de `ModuloDefinicao` como JSON
-- [x] Drag-and-drop para reordenação de tabelas e colunas (SortableJS)
-- [x] Preview de código com syntax highlight antes da geração
-- [x] Auto-deploy local no SEI de desenvolvimento
-- [x] Persistência SQLite com histórico de projetos e gerações
-- [x] API REST (`/api/gerar`, `/api/validar`, `/api/preview`)
-
-### Próximas evoluções 🚀
-
-- [ ] Geração de testes PHP básicos (unitários para RN, funcionais para controller)
-- [ ] Validação semântica de nomenclatura SEI
-- [ ] Diagrama ER automático a partir das tabelas definidas
-- [ ] Canvas de modelagem visual no passo 2
-- [ ] Deploy via SSH para ambientes de homologação
-
----
-
-## Referências
-
-- Guia oficial SEI-Modulos-v3.0 (PDF)
-- Módulo de referência: [mod-sei-pen](https://github.com/pengovbr/mod-sei-pen)
-- [Processo Eletrônico Nacional](https://www.gov.br/gestao/pt-br/assuntos/processo-eletronico-nacional)
+- [x] Conformidade total com SEI Versão 5.0
+- [x] Validação rigorosa de prefixos (SDD)
+- [x] Suporte a módulos sem tabelas
+- [x] Geração automática de recursos de auditoria e segurança
+- [x] Limpeza de menus e permissões no SIP
+- [x] Auto-deploy com Rollback
+- [x] Exportação de projetos em JSON
 
 ---
 

@@ -112,11 +112,7 @@ class ModuloDefinicao(BaseModel):
         tabelas_validas = {t.nome for t in self.tabelas}
         tabelas_sei_nativas = {"documento", "procedimento", "unidade", "usuario", "protocolo"}
 
-        # 1. Validar Dashboard (exige tabelas)
-        if "dashboard" in self.extras and not self.tabelas:
-            raise ValueError("O recurso de Dashboard exige a definição de pelo menos uma tabela para gerar os indicadores.")
-
-        # 2. Garantir Recurso do Dashboard
+        # 1. Garantir Recurso do Dashboard
         if "dashboard" in self.extras:
             existe = any(r.nome == "md_dashboard_visualizar" for r in self.recursos)
             if not existe:
@@ -125,7 +121,7 @@ class ModuloDefinicao(BaseModel):
                     descricao=f"Visualizar Dashboard do módulo {self.nome}"
                 ))
 
-        # 3. Gerar recursos básicos para as tabelas se não existirem
+        # 2. Gerar recursos básicos para as tabelas se não existirem
         for t in self.tabelas:
             acoes = ["listar", "cadastrar", "salvar", "alterar", "excluir"]
             for acao in acoes:

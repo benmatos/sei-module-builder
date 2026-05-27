@@ -75,6 +75,20 @@ def test_validacao_prefixos_colunas():
         ColunaDTO(nome="valor", tipo="decimal(15,2)")
     assert "deve começar com 'din_'" in str(excinfo.value)
 
+def test_modelo_valido_sem_tabelas():
+    # Módulos puramente de interface ou dashboard podem não ter tabelas
+    dados = {
+        "nome": "Módulo de Interface",
+        "slug": "md_interface",
+        "namespace": "MdInterface",
+        "descricao": "Apenas interface",
+        "versao": "1.0.0",
+        "tabelas": []
+    }
+    modulo = ModuloDefinicao(**dados)
+    assert modulo.slug == "md_interface"
+    assert len(modulo.tabelas) == 0
+
 def test_modelo_invalido_namespace_sem_md():
     dados = {
         "nome": "Módulo de Teste",

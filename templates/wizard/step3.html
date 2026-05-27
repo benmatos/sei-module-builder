@@ -11,18 +11,6 @@
       <button type="button" @click="recursos.splice(i,1)" class="text-red-400">✕</button>
     </div>
   </template>
-  <button type="button" @click="recursos.push({nome:'',descricao:''})" class="text-blue-600 text-sm mb-4">+ Recurso</button>
-  <div class="mb-6 p-4 bg-blue-50 border border-blue-100 rounded">
-    <h2 class="font-semibold mb-2 flex items-center gap-2">
-      <span>📊</span> Recursos Extras
-    </h2>
-    <label class="flex items-center gap-2 cursor-pointer">
-      <input type="checkbox" name="extra_dashboard" value="true" class="w-4 h-4">
-      <span class="text-sm font-medium text-gray-700">Incluir Dashboard de Estatísticas</span>
-    </label>
-    <p class="text-xs text-gray-500 mt-1 ml-6">Gera automaticamente uma tela com gráficos baseados nas tabelas do módulo.</p>
-  </div>
-
   <h2 class="font-semibold mb-2">Menu Pai do Novo Módulo</h2>
   <div class="mb-4">
     <label for="menu_pai" class="block text-sm font-medium text-gray-700 mb-1">Selecione o menu pai onde o novo módulo será exibido:</label>

@@ -51,6 +51,22 @@ async def w1_post(request: Request, nome: str = Form(...), slug: str = Form(...)
                    namespace: str = Form(...), descricao: str = Form(...),
                    versao: str = Form(...), sei_versao_min: str = Form(...), 
                    autor: str = Form(...), extras: List[str] = Form([])):
+    # Validação antecipada de Namespace e Slug
+    try:
+        # Criamos um objeto parcial apenas para validar os campos básicos
+        class ValidadorPasso1(ModuloDefinicao):
+            tabelas: List = [] # Permite vazio no passo 1
+        ValidadorPasso1(nome=nome, slug=slug, namespace=namespace, descricao=descricao, 
+                        versao=versao, sei_versao_min=sei_versao_min, autor=autor)
+    except ValidationError as e:
+        for err in e.errors():
+            flash(request, f"Campo {err['loc'][0]}: {err['msg']}")
+        request.session["step1"] = dict(nome=nome, slug=slug, namespace=namespace,
+                                         descricao=descricao, versao=versao,
+                                         sei_versao_min=sei_versao_min, autor=autor,
+                                         extras=extras)
+        return RedirectResponse("/wizard/1", status_code=303)
+
     request.session["step1"] = dict(nome=nome, slug=slug, namespace=namespace,
                                      descricao=descricao, versao=versao,
                                      sei_versao_min=sei_versao_min, autor=autor,
@@ -67,7 +83,23 @@ async def w2_get(request: Request):
 @app.post("/wizard/2", response_class=RedirectResponse)
 async def w2_post(request: Request, tabelas_json: str = Form(...)):
     try:
-        request.session["step2"] = json.loads(tabelas_json)
+        tabelas_data = json.loads(tabelas_json)
+        # Validação individual de cada tabela
+        from models import TabelaDTO
+        for t in tabelas_data:
+            TabelaDTO(**t)
+            
+        request.session["step2"] = tabelas_data
+    except ValidationError as e:
+        for err in e.errors():
+            msg = err['msg']
+            if 'loc' in err and err['loc']:
+                # Tenta localizar qual tabela/coluna falhou
+                loc = " -> ".join(str(x) for x in err['loc'])
+                flash(request, f"Erro em {loc}: {msg}")
+            else:
+                flash(request, f"Erro de validação: {msg}")
+        return RedirectResponse("/wizard/2", status_code=303)
     except Exception as e:
         flash(request, f"Erro ao processar tabelas: {e}")
         return RedirectResponse("/wizard/2", status_code=303)
@@ -82,28 +114,32 @@ async def w3_get(request: Request):
     })
 
 @app.post("/wizard/3", response_class=RedirectResponse)
-async def w3_post(request: Request, recursos_json: str = Form(...), menu_pai: str = Form(...), extra_dashboard: Optional[str] = Form(None)):
+async def w3_post(request: Request, recursos_json: str = Form(...), menu_pai: str = Form(...)):
     try:
-        request.session["step3_recursos"] = json.loads(recursos_json)
+        recursos = json.loads(recursos_json)
+        request.session["step3_recursos"] = recursos
         request.session["menu_pai"] = menu_pai
         
-        # Gerencia extras: preserva os do passo 1 e adiciona/remove dashboard do passo 3
         step1 = request.session.get("step1", {})
-        extras = step1.get("extras", [])
         
-        if extra_dashboard == "true":
-            if "dashboard" not in extras: extras.append("dashboard")
-        else:
-            if "dashboard" in extras: 
-                try: extras.remove("dashboard")
-                except ValueError: pass
-            
-        step1["extras"] = extras
-        request.session["step1"] = step1
+        # Validação final do objeto completo antes de ir para a revisão
+        payload = {
+            **step1,
+            "tabelas":  request.session.get("step2", []),
+            "recursos": recursos,
+            "menus":    request.session.get("step3_menus", []),
+            "menu_pai": menu_pai,
+        }
+        ModuloDefinicao(**payload)
         
+    except ValidationError as e:
+        for err in e.errors():
+            flash(request, f"Inconsistência: {err['msg']}")
+        return RedirectResponse("/wizard/3", status_code=303)
     except Exception as e:
         flash(request, f"Erro: {e}")
         return RedirectResponse("/wizard/3", status_code=303)
+        
     return RedirectResponse("/wizard/4", status_code=303)
 
 @app.get("/wizard/4", response_class=HTMLResponse)
