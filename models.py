@@ -17,6 +17,34 @@ class ColunaDTO(BaseModel):
     obrigatorio: bool = True
     fk: Optional[ColunaFK] = None
 
+    @model_validator(mode="after")
+    def validar_prefixos_obrigatorios(self) -> "ColunaDTO":
+        n = self.nome.lower()
+        t = self.tipo
+        
+        # Regras de prefixo do GEMINI.md
+        if self.chave_primaria or self.fk:
+            if not n.startswith("id_"):
+                raise ValueError(f"Coluna '{self.nome}' (PK/FK) deve começar com 'id_'")
+        
+        if t == "char(1)":
+            if not (n.startswith("sin_") or n.startswith("sta_")):
+                raise ValueError(f"Coluna '{self.nome}' (char(1)) deve começar com 'sin_' ou 'sta_'")
+        
+        if t == "date":
+            if not n.startswith("dta_"):
+                raise ValueError(f"Coluna '{self.nome}' (date) deve começar com 'dta_'")
+        
+        if t == "datetime":
+            if not n.startswith("dth_"):
+                raise ValueError(f"Coluna '{self.nome}' (datetime) deve começar com 'dth_'")
+        
+        if t == "decimal(15,2)":
+            if not n.startswith("din_"):
+                raise ValueError(f"Coluna '{self.nome}' (decimal) deve começar com 'din_'")
+        
+        return self
+
 
 class TabelaDTO(BaseModel):
     nome: str
@@ -65,11 +93,18 @@ class ModuloDefinicao(BaseModel):
     extras: List[str] = []
     menu_pai: int = 0
 
+    @field_validator("namespace")
+    @classmethod
+    def validar_namespace(cls, v: str) -> str:
+        if not v.startswith("Md"):
+            raise ValueError("O namespace do módulo deve começar com 'Md' (ex: MdMgi)")
+        return v
+
     @field_validator("slug")
     @classmethod
     def validar_slug(cls, v: str) -> str:
-        if not re.match(r"^mod_[a-z0-9_]+$", v):
-            raise ValueError("O slug do módulo deve começar com 'mod_' e conter apenas minúsculas, números e sublinhados")
+        if not re.match(r"^(mod|md)_[a-z0-9_]+$", v):
+            raise ValueError("O slug do módulo deve começar com 'mod_' ou 'md_' e conter apenas minúsculas, números e sublinhados")
         return v
 
     @model_validator(mode="after")
@@ -90,7 +125,18 @@ class ModuloDefinicao(BaseModel):
                     descricao=f"Visualizar Dashboard do módulo {self.nome}"
                 ))
 
-        # 3. Validar FKs
+        # 3. Gerar recursos básicos para as tabelas se não existirem
+        for t in self.tabelas:
+            acoes = ["listar", "cadastrar", "salvar", "alterar", "excluir"]
+            for acao in acoes:
+                nome_recurso = f"{t.nome}_{acao}"
+                if not any(r.nome == nome_recurso for r in self.recursos):
+                    self.recursos.append(RecursoDTO(
+                        nome=nome_recurso,
+                        descricao=f"Ação {acao} na tabela {t.nome}"
+                    ))
+
+        # 4. Validar FKs
         for tabela in self.tabelas:
             for col in tabela.colunas:
                 if col.fk:

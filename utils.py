@@ -1,7 +1,8 @@
 import re
 
 def to_pascal_case(s: str) -> str:
-    return "".join(word.capitalize() for word in re.split(r"[_-]", s))
+    if not s: return ""
+    return "".join(word[0].upper() + word[1:] for word in re.split(r"[_-]", s) if word)
 
 def to_camel_case(s: str) -> str:
     parts = re.split(r"[_-]", s)

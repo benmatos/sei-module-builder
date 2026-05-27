@@ -1,5 +1,5 @@
 <?php
-// {{ d.nome }} â IntegraÃ§Ã£o
+// {{ d.nome }} — Integração
 // Gerado por SEI Module Builder v{{ d.versao }}
 
 class {{ ns }}Integracao extends SeiIntegracao {
@@ -16,6 +16,7 @@ class {{ ns }}Integracao extends SeiIntegracao {
         infraAdicionarPath($strDir . '/rn');
         infraAdicionarPath($strDir . '/dto');
         infraAdicionarPath($strDir . '/bd');
+        infraAdicionarPath($strDir . '/int');
     }
 
 
@@ -52,6 +53,14 @@ class {{ ns }}Integracao extends SeiIntegracao {
 
     public function processarControlador($strAcao) {
         if (!$strAcao) return false;
+        
+        {% for t in d.tabelas %}
+        if ($strAcao == '{{ t.nome }}_listar' || $strAcao == '{{ t.nome }}_cadastrar') {
+            require_once dirname(__FILE__) . '/' . $strAcao . '.php';
+            return true;
+        }
+        {% endfor %}
+
         switch ($strAcao) {
             {% if "dashboard" in d.extras %}
             case 'md_dashboard_visualizar':

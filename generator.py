@@ -16,6 +16,7 @@ class ModuloSEIGenerator:
         buf = io.BytesIO()
         self.ultimo_arquivo_count = []
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            self._adicionar_diretorios_vazios(zf, definicao)
             self._adicionar_integracao(zf, definicao)
             self._adicionar_dtos(zf, definicao)
             self._adicionar_bds(zf, definicao)
@@ -29,6 +30,14 @@ class ModuloSEIGenerator:
         buf.seek(0)
         return buf.read()
 
+    def _adicionar_diretorios_vazios(self, zf: zipfile.ZipFile, d: ModuloDefinicao):
+        # GEMINI.md exige certas pastas mesmo que vazias inicialmente
+        dirs = ["int", "css", "imagens", "imagens/menu", "ws"]
+        for dr in dirs:
+            # zipfile cria pasta ao adicionar um caminho terminado em /
+            zf.writestr(f"{d.slug}/{dr}/", "")
+            self.ultimo_arquivo_count.append(f"{d.slug}/{dr}/")
+
     def renderizar_preview(self, definicao: ModuloDefinicao) -> dict[str, str]:
         ns = to_pascal_case(definicao.namespace)
         resultado: dict[str, str] = {}
@@ -38,7 +47,7 @@ class ModuloSEIGenerator:
             resultado[f"{ns}{tn}DTO.php"]        = self._render("dto.php.j2",        d=definicao, ns=ns, tabela=t, tnome=tn)
             resultado[f"{ns}{tn}RN.php"]         = self._render("rn.php.j2",         d=definicao, ns=ns, tabela=t, tnome=tn)
             resultado[f"{ns}{tn}BD.php"]         = self._render("bd.php.j2",         d=definicao, ns=ns, tabela=t, tnome=tn)
-            resultado[f"{definicao.slug}_{t.nome}_listar.php"] = self._render("tela_listar.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
+            resultado[f"{t.nome}_listar.php"] = self._render("tela_listar.php.j2", d=definicao, ns=ns, tabela=t, tnome=tn)
         resultado["sei_atualizar.php"]           = self._render("sei_atualizar.php.j2",    d=definicao)
         resultado["ConfiguracaoSEI.exemplo.php"] = self._render("configuracao_sei.php.j2", d=definicao, ns=ns)
         resultado["README.md"]                   = self._render("README.md.j2", d=definicao)
@@ -137,7 +146,7 @@ class ModuloSEIGenerator:
         for t in d.tabelas:
             tn = to_pascal_case(t.nome)
             for view in ("listar", "cadastrar"):
-                self._write(zf, f"{d.slug}/{d.slug}_{t.nome}_{view}.php",
+                self._write(zf, f"{d.slug}/{t.nome}_{view}.php",
                             self._render(f"tela_{view}.php.j2", d=d, ns=ns, tabela=t, tnome=tn))
         self._write(zf, f"{d.slug}/js/{d.slug}.js", self._render("js.js.j2", d=d))
 

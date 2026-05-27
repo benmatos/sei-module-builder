@@ -8,8 +8,8 @@ from generator import ModuloSEIGenerator
 def definicao_valida():
     return ModuloDefinicao(
         nome="Módulo de Teste",
-        slug="mod_teste",
-        namespace="mod_teste",
+        slug="md_teste",
+        namespace="MdTeste",
         descricao="Teste unitário",
         versao="1.0.0",
         sei_versao_min="4.0.0",
@@ -42,30 +42,38 @@ def test_gerar_modulo_zip_estrutura(definicao_valida):
     with zipfile.ZipFile(io.BytesIO(zip_bytes), "r") as zf:
         nomes_arquivos = zf.namelist()
         
-        # Estrutura básica esperada na raiz do modulo (procedural)
-        assert "mod_teste/ModTesteIntegracao.php" in nomes_arquivos
-        assert "mod_teste/README.md" in nomes_arquivos
+        # Estrutura básica esperada na raiz do modulo
+        assert "md_teste/MdTesteIntegracao.php" in nomes_arquivos
+        assert "md_teste/README.md" in nomes_arquivos
+        
+        # Pastas obrigatórias (vazias) exigidas pelo GEMINI.md
+        assert "md_teste/int/" in nomes_arquivos
+        assert "md_teste/css/" in nomes_arquivos
+        assert "md_teste/imagens/" in nomes_arquivos
+        assert "md_teste/imagens/menu/" in nomes_arquivos
+        assert "md_teste/ws/" in nomes_arquivos
         
         # Camada de banco de dados (BD) e RN
-        assert "mod_teste/bd/ModTesteMdTesteTabelaBD.php" in nomes_arquivos
-        assert "mod_teste/rn/ModTesteMdTesteTabelaRN.php" in nomes_arquivos
-        assert "mod_teste/dto/ModTesteMdTesteTabelaDTO.php" in nomes_arquivos
+        assert "md_teste/bd/MdTesteMdTesteTabelaBD.php" in nomes_arquivos
+        assert "md_teste/rn/MdTesteMdTesteTabelaRN.php" in nomes_arquivos
+        assert "md_teste/dto/MdTesteMdTesteTabelaDTO.php" in nomes_arquivos
         
         # Telas e Javascript
-        assert "mod_teste/mod_teste_md_teste_tabela_listar.php" in nomes_arquivos
-        assert "mod_teste/mod_teste_md_teste_tabela_cadastrar.php" in nomes_arquivos
-        assert "mod_teste/js/mod_teste.js" in nomes_arquivos
+        # Note que agora o nome do arquivo da tela é apenas o nome da tabela + ação
+        assert "md_teste/md_teste_tabela_listar.php" in nomes_arquivos
+        assert "md_teste/md_teste_tabela_cadastrar.php" in nomes_arquivos
+        assert "md_teste/js/md_teste.js" in nomes_arquivos
         
         # Scripts
-        assert "mod_teste/scripts/sei_atualizar.php" in nomes_arquivos
-        assert "mod_teste/scripts/sip_atualizar.php" in nomes_arquivos
+        assert "md_teste/scripts/sei_atualizar.php" in nomes_arquivos
+        assert "md_teste/scripts/sip_atualizar.php" in nomes_arquivos
 
 def test_renderizar_preview(definicao_valida):
     generator = ModuloSEIGenerator()
     preview = generator.renderizar_preview(definicao_valida)
     
-    assert "ModTesteIntegracao.php" in preview
-    assert "ModTesteMdTesteTabelaDTO.php" in preview
-    assert "ModTesteMdTesteTabelaRN.php" in preview
-    assert "ModTesteMdTesteTabelaBD.php" in preview
-    assert "mod_teste_md_teste_tabela_listar.php" in preview
+    assert "MdTesteIntegracao.php" in preview
+    assert "MdTesteMdTesteTabelaDTO.php" in preview
+    assert "MdTesteMdTesteTabelaRN.php" in preview
+    assert "MdTesteMdTesteTabelaBD.php" in preview
+    assert "md_teste_tabela_listar.php" in preview

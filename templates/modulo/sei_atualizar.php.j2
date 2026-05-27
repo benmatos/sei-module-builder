@@ -21,12 +21,24 @@ try {
     if (!$bolExiste) {
         $sql = "CREATE TABLE {{ tabela.nome }} (";
         {% for col in tabela.colunas %}
-        $sql .= "{{ col.nome }} {{ col.tipo }} {% if col.chave_primaria %}PRIMARY KEY{% endif %} {% if col.obrigatorio %}NOT NULL{% else %}NULL{% endif %},";
+        $sql .= "{{ col.nome }} {{ col.tipo }} {% if col.obrigatorio %}NOT NULL{% else %}NULL{% endif %},";
         {% endfor %}
+        
+        {% set pk_cols = tabela.colunas | selectattr("chave_primaria") | list %}
+        {% if pk_cols %}
+        $sql .= "CONSTRAINT pk_{{ tabela.nome }} PRIMARY KEY ({% for pk in pk_cols %}{{ pk.nome }}{{ "," if not loop.last }}{% endfor %}),";
+        {% endif %}
+
+        {% for col in tabela.colunas %}
+        {% if col.fk %}
+        $sql .= "CONSTRAINT fk_{{ tabela.nome }}_{{ col.fk.tabela_slug }} FOREIGN KEY ({{ col.nome }}) REFERENCES {{ col.fk.tabela_slug }} ({{ col.fk.coluna }}),";
+        {% endif %}
+        {% endfor %}
+
         $sql = rtrim($sql, ",") . ")";
         
         $objInfraBanco->executarSql($sql);
-        echo "Tabela {{ tabela.nome }} criada.\n";
+        echo "Tabela {{ tabela.nome }} criada com PK e FKs conforme GEMINI.md.\n";
     }
     {% endfor %}
 

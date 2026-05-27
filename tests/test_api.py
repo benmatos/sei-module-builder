@@ -6,8 +6,8 @@ client = TestClient(app)
 def test_api_validar_definicao_valida():
     dados = {
         "nome": "Módulo de Teste",
-        "slug": "mod_teste",
-        "namespace": "mod_teste",
+        "slug": "md_teste",
+        "namespace": "MdTeste",
         "descricao": "Teste unitário",
         "versao": "1.0.0",
         "sei_versao_min": "4.0.0",
@@ -24,8 +24,8 @@ def test_api_validar_definicao_valida():
 def test_api_validar_definicao_invalida():
     dados = {
         "nome": "Módulo de Teste",
-        "slug": "mod-teste", # invalido
-        "namespace": "mod_teste",
+        "slug": "md-teste", # invalido
+        "namespace": "MdTeste",
         "descricao": "Teste unitário",
         "versao": "1.0.0",
         "sei_versao_min": "4.0.0",
@@ -41,8 +41,8 @@ def test_api_validar_definicao_invalida():
 def test_api_gerar_modulo():
     dados = {
         "nome": "Módulo de Teste",
-        "slug": "mod_teste",
-        "namespace": "mod_teste",
+        "slug": "md_teste",
+        "namespace": "MdTeste",
         "descricao": "Teste unitário",
         "versao": "1.0.0",
         "sei_versao_min": "4.0.0",

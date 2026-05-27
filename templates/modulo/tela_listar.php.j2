@@ -40,7 +40,7 @@ try {
                     <td><?php echo htmlspecialchars($row->get{{ col.nome | pascalcase }}()); ?></td>
                     {% endfor %}
                     <td>
-                        <a href="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_alterar&id=<?php echo $row->get{{ pk_col.nome | pascalcase }}(); ?>">Alterar</a>
+                        <a href="controlador.php?acao={{ tabela.nome }}_alterar&id=<?php echo $row->get{{ pk_col.nome | pascalcase }}(); ?>">Alterar</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -51,7 +51,7 @@ try {
         </table>
         
         <div style="margin-top: 16px;">
-            <a href="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_cadastrar" class="infraButton">Novo Registro</a>
+            <a href="controlador.php?acao={{ tabela.nome }}_cadastrar" class="infraButton">Novo Registro</a>
         </div>
     </div>
     <?php

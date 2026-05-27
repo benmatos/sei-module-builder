@@ -19,14 +19,15 @@ try {
     $obj{{ tnome }}DTO = new {{ ns }}{{ tnome }}DTO();
     if (isset($_GET['id'])) {
         $obj{{ tnome }}RN = new {{ ns }}{{ tnome }}RN();
-        $obj{{ tnome }}DTO->setNum{{ (tabela.colunas | selectattr("chave_primaria") | first).nome | pascalcase or tabela.colunas[0].nome | pascalcase }}($_GET['id']);
+        {% set pk_col = (tabela.colunas | selectattr("chave_primaria") | first) or tabela.colunas[0] %}
+        $obj{{ tnome }}DTO->setNum{{ pk_col.nome | pascalcase }}($_GET['id']);
         $obj{{ tnome }}DTO->retTodos();
         $obj{{ tnome }}DTO = $obj{{ tnome }}RN->consultar($obj{{ tnome }}DTO);
     }
 
     ?>
     <div class="infraAreaDados">
-        <form method="post" action="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_salvar">
+        <form method="post" action="controlador.php?acao={{ tabela.nome }}_salvar">
             {% for col in tabela.colunas %}
             <div class="infraDivLabel">
                 <label class="infraLabel">{{ col.nome | pascalcase }}:</label>
@@ -37,7 +38,7 @@ try {
             
             <div style="margin-top: 20px;">
                 <button type="submit" class="infraButton">Salvar</button>
-                <a href="controlador.php?acao={{ d.slug }}_{{ tabela.nome }}_listar" class="infraButton">Cancelar</a>
+                <a href="controlador.php?acao={{ tabela.nome }}_listar" class="infraButton">Cancelar</a>
             </div>
         </form>
     </div>
