@@ -77,6 +77,17 @@ try {
 
     // ── Menus SIP ─────────────────────────────────────────────────────────────
     {% for menu in d.menus %}
+    $objMenuRN  = new MenuRN();
+    $objBuscaDTO = new MenuDTO();
+    $objBuscaDTO->setStrLink('{{ menu.link }}');
+    $objMenuRN->listar($objBuscaDTO);
+
+    if (count($objBuscaDTO->toArray()) > 0) {
+        $objMenuExistente = $objBuscaDTO->toArray()[0];
+        echo "[LIMPANDO] Removendo menu antigo: {{ menu.titulo }}\n";
+        $objMenuRN->excluir($objMenuExistente);
+    }
+
     $objMenuDTO = new MenuDTO();
     $objMenuDTO->setStrTitulo('{{ menu.titulo }}');
     $objMenuDTO->setStrLink('{{ menu.link }}');
@@ -84,17 +95,8 @@ try {
     $objMenuDTO->setStrSistema('{{ d.slug }}');
     $objMenuDTO->setStrPerfil('{{ menu.perfil_requerido }}');
 
-    $objMenuRN  = new MenuRN();
-    $objBuscaDTO = new MenuDTO();
-    $objBuscaDTO->setStrLink('{{ menu.link }}');
-    $objMenuRN->listar($objBuscaDTO);
-
-    if (count($objBuscaDTO->toArray()) === 0) {
-        $objMenuRN->incluir($objMenuDTO);
-        echo "Menu criado: {{ menu.titulo }}\n";
-    } else {
-        echo "Menu já existe: {{ menu.titulo }}\n";
-    }
+    $objMenuRN->incluir($objMenuDTO);
+    echo "Menu criado: {{ menu.titulo }}\n";
     {% endfor %}
 
     echo "\nScript SIP avançado concluído com sucesso.\n";

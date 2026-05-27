@@ -22,7 +22,9 @@ Em ambiente de desenvolvimento, o módulo pode ser **deployado automaticamente**
 | Geração de ZIP | Módulo completo com estrutura `mod-sei-pen`-compatível |
 | Auto-deploy local | Deploy automático no SEI de desenvolvimento após a geração |
 | Persistência SQLite | Histórico de projetos e gerações com carregamento/reutilização |
-| API REST | Endpoints `/api/gerar` e `/api/validar` para integração programática |
+| Export/Import JSON | Salve e restaure definições de módulos em arquivos JSON |
+| Limpeza de Menus | Remoção automática de itens de menu antigos no SIP antes da recriação |
+| API REST | Endpoints `/api/gerar`, `/api/validar` e `/api/preview` para integração |
 
 ---
 
@@ -41,7 +43,7 @@ sei-module-builder/
 ├── templates/
 │   ├── base.html
 │   ├── wizard/        # step1–step4
-│   ├── projetos/      # index, detalhe
+│   ├── projetos/      # index, detalhe, importar
 │   ├── deploy/        # resultado
 │   └── modulo/        # Templates .php.j2 e .md.j2 de saída
 └── static/
@@ -62,7 +64,7 @@ ModuloDefinicao (Pydantic)
       │                   ├── Extração no modulos_dir
       │                   ├── Patch ConfiguracaoSEI.php
       │                   ├── php sei_atualizar.php
-      │                   └── php sip_atualizar.php
+      │                   └── php sip_atualizar.php (com limpeza de menus)
       │
       └─► /deploy/resultado  (ou download do ZIP se deploy inativo)
 ```
@@ -100,103 +102,25 @@ uvicorn main:app --reload
 ### Wizard (interface web)
 
 1. Acesse `http://localhost:8000`
-2. Preencha os 4 passos: metadados, tabelas/colunas, recursos/menus, revisão
-3. No passo 4, visualize o preview do código gerado com syntax highlight
-4. Clique **Gerar e Deployar** (com deploy ativo) ou **Gerar Módulo (ZIP)**
+2. **Passo 1 (Metadados)**: Nome, slug, namespace e seleção de templates opcionais (Workflow, Exportação, Dashboard, etc).
+3. **Passo 2 (Tabelas)**: Definição da estrutura de dados com drag-and-drop para ordenação.
+4. **Passo 3 (Recursos/Menus)**: Definição de recursos obrigatórios, seleção do Menu Pai (**Relatórios** ou **Administração**) e submenus opcionais.
+5. **Passo 4 (Revisão)**: Validação final dos dados e preview do código gerado.
+6. Clique **Gerar e Deployar** (com deploy ativo) ou **Gerar Módulo (ZIP)**.
 
-### API REST
+### Exportação e Importação
 
-**Gerar módulo (retorna ZIP):**
-
-```bash
-curl -X POST http://localhost:8000/api/gerar \
-  -H "Content-Type: application/json" \
-  -d @definicao.json \
-  --output mod_manifestacao_v1.0.0.zip
-```
-
-**Validar definição:**
-
-```bash
-curl -X POST http://localhost:8000/api/validar \
-  -H "Content-Type: application/json" \
-  -d @definicao.json
-# {"valid": true, "slug": "mod_manifestacao", "tabelas": 2}
-```
-
-**Estrutura do JSON de entrada:**
-
-```json
-{
-  "nome": "Módulo de Manifestação",
-  "slug": "mod_manifestacao",
-  "namespace": "ModManifestacao",
-  "descricao": "Gerencia manifestações de usuários",
-  "versao": "1.0.0",
-  "sei_versao_min": "3.1.0",
-  "autor": "Nome / Equipe",
-  "tabelas": [
-    {
-      "nome": "md_manifestacao",
-      "alias": "man",
-      "colunas": [
-        { "nome": "id_manifestacao", "tipo": "int",          "chave_primaria": true,  "obrigatorio": true },
-        { "nome": "descricao",       "tipo": "varchar(255)", "chave_primaria": false, "obrigatorio": true },
-        { "nome": "id_usuario",      "tipo": "int",          "chave_primaria": false, "obrigatorio": true,
-          "fk": { "tabela_slug": "sei:usu", "coluna": "id_usuario",
-                  "coluna_pai": "id_usuario", "colunas_exibir": ["nome"] } }
-      ]
-    }
-  ],
-  "recursos": [
-    { "nome": "md_manifestacao_listar", "descricao": "Listar manifestações" }
-  ],
-  "menus": [
-    { "titulo": "Manifestações", "link": "md_manifestacao_listar",
-      "icone": "fa-list", "perfil_requerido": "Básico" }
-  ]
-}
-```
-
-### Deploy local via CLI
-
-```bash
-# Deploy direto (sem wizard)
-python deploy.py --zip mod_manifestacao_v1.0.0.zip
-
-# Ver backups disponíveis
-python deploy.py --rollback mod_manifestacao --list-backups
-
-# Rollback para versão anterior
-python deploy.py --rollback mod_manifestacao --tag 20260523_143201
-```
+Agora é possível salvar o estado do seu projeto em um arquivo JSON:
+- No Passo 1, use o link "ou importar JSON de projeto existente".
+- Na lista de projetos, utilize o botão de exportação para baixar o arquivo JSON do módulo.
 
 ---
 
-## Estrutura do ZIP gerado
+## Scripts SIP e Limpeza de Menus
 
-```
-{slug}/
-├── src/
-│   ├── {Namespace}Integracao.php
-│   ├── db/
-│   │   ├── dto/{Namespace}{Tabela}DTO.php
-│   │   └── rn/{Namespace}{Tabela}RN.php
-│   ├── web/
-│   │   ├── controller/{Namespace}{Tabela}Controller.php
-│   │   ├── view/{slug}_{tabela}_{listar|cadastrar}.php
-│   │   └── js/{slug}.js
-│   └── scripts/
-│       ├── sei_atualizar.php
-│       └── sip_atualizar.php
-├── config/
-│   └── ConfiguracaoSEI.exemplo.php
-├── README.md
-├── INSTALL.md
-└── USAGE.md
-```
-
-> **Nenhum SQL explícito** nos arquivos gerados. Toda interação com banco usa `InfraDTO`/`InfraRN`. Scripts de instalação usam `InfraBanco::criarTabela()`.
+Os scripts de atualização do SIP gerados pelo Builder possuem inteligência para:
+- **Evitar duplicidade**: Antes de criar um item de menu, o script verifica se ele já existe e o remove (limpando também as permissões associadas).
+- **Hierarquia dinâmica**: O item de menu principal é criado sob o menu pai selecionado no wizard.
 
 ---
 
@@ -214,56 +138,28 @@ python deploy.py --rollback mod_manifestacao --tag 20260523_143201
 
 ---
 
-## Variáveis de ambiente
-
-| Variável | Padrão | Descrição |
-|---|---|---|
-| `SECRET_KEY` | `dev-insecure-...` | Chave de assinatura da sessão (obrigatório em produção) |
-| `SESSION_TTL_SECONDS` | `7200` | TTL da sessão do wizard (2h) |
-| `DEBUG` | `false` | Ativa reload automático e logs detalhados |
-| `DB_PATH` | `sei_builder.db` | Caminho do banco SQLite |
-
-
----
-
 ## Roadmap
 
 ### Concluído ✅
 
 - [x] Wizard 4 passos com validação Pydantic
+- [x] Seleção de Menu Pai (Relatórios/Administração) no Passo 3
+- [x] Limpeza automática de menus no `sip_atualizar.php`
+- [x] Export/import de `ModuloDefinicao` como JSON
 - [x] Drag-and-drop para reordenação de tabelas e colunas (SortableJS)
-- [x] Preview de código com syntax highlight antes da geração (highlight.js)
-- [x] Geração de ZIP com estrutura `mod-sei-pen`-compatível
+- [x] Preview de código com syntax highlight antes da geração
 - [x] Auto-deploy local no SEI de desenvolvimento
-- [x] Backup automático com rollback via CLI
 - [x] Persistência SQLite com histórico de projetos e gerações
 - [x] API REST (`/api/gerar`, `/api/validar`, `/api/preview`)
 
----
+### Próximas evoluções 🚀
 
-### Próximas evoluções
-
-#### Completar escopo original
-- [ ] Export/import explícito do `ModuloDefinicao` como JSON — compartilhamento entre times e repositórios
-- [ ] Templates para jobs agendados, envio de e-mails e integração SIP avançada
-
-#### Qualidade do código gerado
 - [ ] Geração de testes PHP básicos (unitários para RN, funcionais para controller)
-- [ ] Validação semântica — convenções de nomenclatura SEI, coerência entre alias e tabela, conflito com tabelas nativas do sistema
+- [ ] Validação semântica de nomenclatura SEI
+- [ ] Diagrama ER automático a partir das tabelas definidas
+- [ ] Canvas de modelagem visual no passo 2
+- [ ] Deploy via SSH para ambientes de homologação
 
-#### Modelagem visual
-- [ ] Diagrama ER automático a partir das tabelas e FKs definidas
-- [ ] Canvas de modelagem no passo 2 como alternativa ao formulário
-
-#### Deploy e ciclo de vida
-- [ ] Diff entre gerações — exibir o que mudou de v1.0.0 para v1.1.0 antes de deployar
-- [ ] Deploy via SSH para ambientes de homologação e produção
-- [ ] Integração com Git — commit automático do módulo gerado no repositório do projeto
-
-#### Ecossistema
-- [ ] Templates customizáveis pela interface — editar `.php.j2` sem mexer nos arquivos do servidor
-- [ ] Suporte a módulos com dependência entre si (módulo A referencia tabelas do módulo B)
-- [ ] Geração de documentação Markdown/Confluence a partir da definição do módulo
 ---
 
 ## Referências

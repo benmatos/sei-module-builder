@@ -68,31 +68,33 @@ try {
 
     $row = $objInfraBanco->consultarSql("SELECT id_item_menu FROM item_menu WHERE id_sistema = ? AND rotulo = ?", array($id_sistema, $rotulo));
     if ($row && count($row) > 0) {
-        $id_item_menu = $row[0]['id_item_menu'];
-        echo "[JA EXISTE] Item de Menu: $rotulo (id: $id_item_menu)\n";
-    } else {
-        $id_item_menu_pai = {{ d.menu_pai|default(0)|int }};
-        if ($id_item_menu_pai == 0) $id_item_menu_pai = null;
+        $id_item_menu_antigo = $row[0]['id_item_menu'];
+        echo "[LIMPANDO] Removendo item de menu antigo: $rotulo (id: $id_item_menu_antigo)\n";
+        $objInfraBanco->executarSql("DELETE FROM rel_perfil_item_menu WHERE id_item_menu = ? AND id_sistema = ?", array($id_item_menu_antigo, $id_sistema));
+        $objInfraBanco->executarSql("DELETE FROM item_menu WHERE id_item_menu = ? AND id_sistema = ?", array($id_item_menu_antigo, $id_sistema));
+    }
 
-        $row_max = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(id_item_menu), 0) + 1 AS next_id FROM item_menu");
-        $id_item_menu = $row_max[0]['next_id'];
+    $id_item_menu_pai = {{ d.menu_pai|default(0)|int }};
+    if ($id_item_menu_pai == 0) $id_item_menu_pai = null;
 
-        $row_seq = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(sequencia), 0) + 1 AS next_seq FROM item_menu WHERE id_menu_pai = ? AND id_item_menu_pai " . ($id_item_menu_pai ? "= ?" : "IS NULL") . " AND id_sistema = ?", 
-            $id_item_menu_pai ? array($id_menu, $id_item_menu_pai, $id_sistema) : array($id_menu, $id_sistema));
-        $sequencia = $row_seq[0]['next_seq'];
+    $row_max = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(id_item_menu), 0) + 1 AS next_id FROM item_menu");
+    $id_item_menu = $row_max[0]['next_id'];
 
-        $objInfraBanco->executarSql(
-            "INSERT INTO item_menu (id_item_menu, id_menu, id_menu_pai, id_item_menu_pai, id_sistema, id_recurso, rotulo, descricao, sin_nova_janela, sin_ativo, sequencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'N', 'S', ?)",
-            array($id_item_menu, $id_menu, $id_menu, $id_item_menu_pai, $id_sistema, $id_recurso_menu, $rotulo, 'Acesso ao módulo ' . $rotulo, $sequencia)
-        );
-        echo "[CRIADO] Item de Menu: $rotulo (id: $id_item_menu, sequencia: $sequencia)\n";
-        
-        // Vincular item de menu ao perfil Administrador
-        if ($id_perfil_adm && $id_recurso_menu) {
-            $objInfraBanco->executarSql("INSERT INTO rel_perfil_item_menu (id_perfil, id_sistema, id_menu, id_item_menu, id_recurso) VALUES (?, ?, ?, ?, ?)",
-                array($id_perfil_adm, $id_sistema, $id_menu, $id_item_menu, $id_recurso_menu));
-            echo "  [VINCULADO] Menu -> Perfil Administrador\n";
-        }
+    $row_seq = $objInfraBanco->consultarSql("SELECT ISNULL(MAX(sequencia), 0) + 1 AS next_seq FROM item_menu WHERE id_menu_pai = ? AND id_item_menu_pai " . ($id_item_menu_pai ? "= ?" : "IS NULL") . " AND id_sistema = ?", 
+        $id_item_menu_pai ? array($id_menu, $id_item_menu_pai, $id_sistema) : array($id_menu, $id_sistema));
+    $sequencia = $row_seq[0]['next_seq'];
+
+    $objInfraBanco->executarSql(
+        "INSERT INTO item_menu (id_item_menu, id_menu, id_menu_pai, id_item_menu_pai, id_sistema, id_recurso, rotulo, descricao, sin_nova_janela, sin_ativo, sequencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'N', 'S', ?)",
+        array($id_item_menu, $id_menu, $id_menu, $id_item_menu_pai, $id_sistema, $id_recurso_menu, $rotulo, 'Acesso ao módulo ' . $rotulo, $sequencia)
+    );
+    echo "[CRIADO] Item de Menu: $rotulo (id: $id_item_menu, sequencia: $sequencia)\n";
+    
+    // Vincular item de menu ao perfil Administrador
+    if ($id_perfil_adm && $id_recurso_menu) {
+        $objInfraBanco->executarSql("INSERT INTO rel_perfil_item_menu (id_perfil, id_sistema, id_menu, id_item_menu, id_recurso) VALUES (?, ?, ?, ?, ?)",
+            array($id_perfil_adm, $id_sistema, $id_menu, $id_item_menu, $id_recurso_menu));
+        echo "  [VINCULADO] Menu -> Perfil Administrador\n";
     }
 
     echo "\nScript SIP concluido com sucesso.\n";

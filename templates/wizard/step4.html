@@ -14,10 +14,47 @@
     <p><span class="text-gray-500">SEI mín.:</span> {{ step1.sei_versao_min }}</p>
     <p><span class="text-gray-500">Autor:</span> {{ step1.autor }}</p>
   </div>
-  <div class="bg-white border rounded p-3 flex gap-6">
+  <div class="bg-white border rounded p-3 flex gap-6 col-span-2 sm:col-span-2">
     <span><strong class="text-2xl text-blue-700">{{ tabelas|length }}</strong><br/><span class="text-xs text-gray-500">tabelas</span></span>
     <span><strong class="text-2xl text-blue-700">{{ recursos|length }}</strong><br/><span class="text-xs text-gray-500">recursos</span></span>
     <span><strong class="text-2xl text-blue-700">{{ menus|length }}</strong><br/><span class="text-xs text-gray-500">menus</span></span>
+    <span class="ml-auto text-right">
+      <span class="text-xs text-gray-500 uppercase font-semibold">Menu Pai</span><br/>
+      <span class="text-sm font-medium text-gray-800">
+        {% if menu_pai == '100005464' or menu_pai == 'Relatórios' %}Relatórios
+        {% elif menu_pai == '100005471' or menu_pai == 'Administração' %}Administração
+        {% else %}Raiz (nenhum){% endif %}
+      </span>
+    </span>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <div class="bg-gray-50 border rounded-lg p-3">
+    <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Recursos Definidos</h3>
+    <ul class="text-xs space-y-1">
+      {% for r in recursos %}
+      <li class="flex items-start gap-2">
+        <span class="text-blue-500 mt-0.5">●</span>
+        <span><strong>{{ r.nome }}</strong>: {{ r.descricao }}</span>
+      </li>
+      {% else %}
+      <li class="text-gray-400 italic">Nenhum recurso adicional.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="bg-gray-50 border rounded-lg p-3">
+    <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Submenus e Itens</h3>
+    <ul class="text-xs space-y-1">
+      {% for m in menus %}
+      <li class="flex items-start gap-2">
+        <span class="text-green-500 mt-0.5">▸</span>
+        <span><strong>{{ m.titulo }}</strong> (<code class="bg-gray-200 px-0.5 rounded">{{ m.link }}</code>)</span>
+      </li>
+      {% else %}
+      <li class="text-gray-400 italic">Nenhum menu personalizado.</li>
+      {% endfor %}
+    </ul>
   </div>
 </div>
 
