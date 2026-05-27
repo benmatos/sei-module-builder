@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://localhost:5000/ -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEI Analytics — Painel Gerencial</title>
+  <link rel="stylesheet" href="./dashboard_files/bootstrap.min.css">
+  <link rel="stylesheet" href="./dashboard_files/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --sei-azul: #1a3a5c;
+      --sei-azul-claro: #2563a8;
+      --sei-verde: #198754;
+      --sei-amarelo: #ffc107;
+      --sei-cinza-bg: #f4f6f9;
+    }
+
+    body {
+      background-color: var(--sei-cinza-bg);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 0.93rem;
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--sei-azul) 0%, var(--sei-azul-claro) 100%);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar .brand {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .topbar .brand i { font-size: 1.4rem; }
+    .topbar .subtitle { color: #b8d4f0; font-size: 0.8rem; }
+    #ultimaAtualizacao { color: #b8d4f0; font-size: 0.78rem; }
+    #infoUsuario {
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      backdrop-filter: blur(4px);
+      min-width: 280px;
+    }
+
+    .filtros-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,.07);
+      margin-bottom: 1.25rem;
+    }
+    .filtros-card label { font-size: 0.78rem; color: #6c757d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .kpi-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.1rem 1.3rem;
+      box-shadow: 0 1px 8px rgba(0,0,0,.07);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: 100%;
+    }
+    .kpi-icon {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .kpi-icon.azul    { background: #e8f0fe; color: var(--sei-azul-claro); }
+    .kpi-icon.verde   { background: #d1fae5; color: var(--sei-verde); }
+    .kpi-icon.amarelo { background: #fff8e1; color: #e07c00; }
+    .kpi-icon.roxo    { background: #ede9fe; color: #7c3aed; }
+    .kpi-valor { font-size: 1.75rem; font-weight: 700; line-height: 1.1; color: #1e293b; }
+    .kpi-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-sub   { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+
+    .section-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 8px rgba(0,0,0,.07);
+      padding: 1.25rem;
+      height: 100%;
+    }
+    .section-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--sei-azul);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .badge-ate15    { background: #d1fae5; color: #065f46; }
+    .badge-16a30    { background: #fef9c3; color: #713f12; }
+    .badge-31a60    { background: #ffedd5; color: #9a3412; }
+    .badge-acima60  { background: #fee2e2; color: #7f1d1d; }
+    .badge-30a60  { background: #fef9c3; color: #713f12; }
+    .badge-61a90  { background: #ffedd5; color: #9a3412; }
+    .badge-acima90 { background: #fee2e2; color: #7f1d1d; }
+
+    .medal-1 { color: #f59e0b; }
+    .medal-2 { color: #94a3b8; }
+    .medal-3 { color: #b45309; }
+
+    .table-sm th { font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .table-sm td { font-size: 0.83rem; vertical-align: middle; }
+    .table-hover tbody tr:hover { background-color: #f0f4ff; }
+
+    .estado-vazio { text-align: center; padding: 2.5rem 0; color: #94a3b8; }
+    .estado-vazio i { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+
+    .chart-wrapper { position: relative; height: 260px; }
+    .sem-mov-table-wrap { max-height: 300px; overflow-y: auto; }
+    .progress-rank {
+      height: 8px;
+      border-radius: 4px;
+      min-width: 120px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar mb-4">
+  <div>
+    <div class="brand"><i class="bi bi-bar-chart-line-fill"></i> SEI Analytics</div>
+    <div class="subtitle">Painel Gerencial de Indicadores</div>
+  </div>
+  <div class="text-end">
+    <div id="infoUsuario">
+      <div style="color:#fff;font-size:0.95rem;font-weight:600;margin-bottom:0.15rem;">
+        <i class="bi bi-person-circle me-1"></i><span id="nomeUsuario">Benjamim Matos</span>
+      </div>
+      <div style="color:#d4e4f7;font-size:0.78rem;">
+        <i class="bi bi-building me-1"></i><span id="unidadeUsuario">TESTE</span>
+      </div>
+    </div>
+    <div id="ultimaAtualizacao"><i class="bi bi-clock me-1"></i>Carregado em 26/05/2026 21:13</div>
+    <a href="http://localhost:5000/" class="btn btn-sm btn-light mt-2">
+      <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+    </a>
+  </div>
+</div>
+
+<div class="container-fluid px-4 pb-5">
+
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="kpi-card">
+        <div class="kpi-icon azul"><i class="bi bi-folder2-open"></i></div>
+        <div>
+          <div class="kpi-valor">0</div>
+          <div class="kpi-label">Total de Processos</div>
+            <div class="kpi-sub">25/02/2026 – 26/05/2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="kpi-card">
+        <div class="kpi-icon amarelo"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <div class="kpi-valor">0</div>
+          <div class="kpi-label">Em Andamento</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="kpi-card">
+        <div class="kpi-icon verde"><i class="bi bi-check2-circle"></i></div>
+        <div>
+          <div class="kpi-valor">0</div>
+          <div class="kpi-label">Concluídos</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="kpi-card">
+        <div class="kpi-icon roxo"><i class="bi bi-stopwatch"></i></div>
+        <div>
+          <div class="kpi-valor">0,0</div>
+          <div class="kpi-label">Tempo Médio (dias úteis)</div>
+            <div class="kpi-sub">Mediana: 0,0 d.u. | 0 proc.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backlog + Documentos -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-lg-8">
+      <div class="section-card">
+        <div class="section-title"><i class="bi bi-layers"></i> Backlog por Unidade</div>
+        <div class="chart-wrapper">
+          <canvas id="chartBacklog" width="979" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 979px;"></canvas>
+        </div>
+        <div class="mt-3" style="max-height:220px;overflow-y:auto;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="sticky-top bg-white">
+              <tr>
+                <th>Unidade</th>
+                <th class="text-center">Total</th>
+                <th class="text-center">≤ 15d</th>
+                <th class="text-center">16–30d</th>
+                <th class="text-center">31–60d</th>
+                <th class="text-center">&gt; 60d</th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr>
+                  <td><strong></strong><br><small class="text-muted">110000001</small></td>
+                  <td class="text-center"><strong>4</strong></td>
+                  <td class="text-center"><span class="badge badge-ate15 rounded-pill px-2">0</span></td>
+                  <td class="text-center"><span class="badge badge-16a30 rounded-pill px-2">0</span></td>
+                  <td class="text-center"><span class="badge badge-31a60 rounded-pill px-2">0</span></td>
+                  <td class="text-center"><span class="badge badge-acima60 rounded-pill px-2">4</span></td>
+                </tr>
+                <tr>
+                  <td><strong></strong><br><small class="text-muted">110000003</small></td>
+                  <td class="text-center"><strong>1</strong></td>
+                  <td class="text-center"><span class="badge badge-ate15 rounded-pill px-2">0</span></td>
+                  <td class="text-center"><span class="badge badge-16a30 rounded-pill px-2">0</span></td>
+                  <td class="text-center"><span class="badge badge-31a60 rounded-pill px-2">0</span></td>
+                  <td class="text-center"><span class="badge badge-acima60 rounded-pill px-2">1</span></td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="section-card">
+        <div class="section-title"><i class="bi bi-file-earmark-text"></i> Documentos por Processo</div>
+        <div class="row g-3 text-center mt-1">
+          <div class="col-12">
+            <div style="background:#f0f4ff;border-radius:10px;padding:1.1rem;">
+              <div style="font-size:2.2rem;font-weight:700;color:var(--sei-azul-claro)">0,0</div>
+              <div class="kpi-label">Média por Processo</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#f0fdf4;border-radius:10px;padding:0.9rem;">
+              <div style="font-size:1.5rem;font-weight:700;color:var(--sei-verde)">0</div>
+              <div class="kpi-label">Mediana</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#fff7ed;border-radius:10px;padding:0.9rem;">
+              <div style="font-size:1.5rem;font-weight:700;color:#c2410c">0</div>
+              <div class="kpi-label">Máximo</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrapper mt-3" style="height:160px;">
+          <canvas id="chartDocs"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tendência Histórica -->
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="section-card">
+        <div class="section-title"><i class="bi bi-graph-up-arrow"></i> Tendência Histórica</div>
+        <div class="chart-wrapper" style="height:280px;">
+          <canvas id="chartTendencia"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Processos sem Movimentação -->
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="section-card">
+        <div class="section-title"><i class="bi bi-pause-circle"></i> Processos sem Movimentação (&gt;30 dias)</div>
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-3">
+            <div class="kpi-card" style="padding:.8rem 1rem;">
+              <div class="kpi-icon" style="background:#ede9fe;color:#7c3aed;width:42px;height:42px;font-size:1.2rem;"><i class="bi bi-pause-circle"></i></div>
+              <div>
+                <div class="kpi-valor" style="font-size:1.5rem;">5</div>
+                <div class="kpi-label">Total Afetados</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="kpi-card" style="padding:.8rem 1rem;">
+              <div class="kpi-icon" style="background:#fef9c3;color:#713f12;width:42px;height:42px;font-size:1.2rem;"><i class="bi bi-calendar2-week"></i></div>
+              <div>
+                <div class="kpi-valor" style="font-size:1.5rem;">0</div>
+                <div class="kpi-label">30 – 60 dias</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="kpi-card" style="padding:.8rem 1rem;">
+              <div class="kpi-icon" style="background:#ffedd5;color:#9a3412;width:42px;height:42px;font-size:1.2rem;"><i class="bi bi-calendar2-check"></i></div>
+              <div>
+                <div class="kpi-valor" style="font-size:1.5rem;">0</div>
+                <div class="kpi-label">61 – 90 dias</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="kpi-card" style="padding:.8rem 1rem;">
+              <div class="kpi-icon" style="background:#fee2e2;color:#7f1d1d;width:42px;height:42px;font-size:1.2rem;"><i class="bi bi-exclamation-triangle"></i></div>
+              <div>
+                <div class="kpi-valor" style="font-size:1.5rem;">5</div>
+                <div class="kpi-label">&gt; 90 dias</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sem-mov-table-wrap">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="sticky-top bg-white">
+              <tr>
+                <th>Processo</th>
+                <th>Unidade</th>
+                <th>Tipo</th>
+                <th class="text-end">Autuação</th>
+                <th class="text-end">Última Movimentação</th>
+                <th class="text-center">Dias Parado</th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr>
+                  <td><strong>99990.000001/2026-53</strong></td>
+                  <td><br><small class="text-muted">110000001</small></td>
+                  <td><small>Acesso ï¿½ Informaï¿½ï¿½o: Demanda do e-SIC</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-center"><span class="badge badge-acima90 rounded-pill px-2">20.600d</span></td>
+                </tr>
+                <tr>
+                  <td><strong>99990.000007/2026-01</strong></td>
+                  <td><br><small class="text-muted">110000001</small></td>
+                  <td><small>Patrimï¿½nio: Gestï¿½o de Bens Imï¿½veis</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-center"><span class="badge badge-acima90 rounded-pill px-2">20.600d</span></td>
+                </tr>
+                <tr>
+                  <td><strong>99990.000009/2026-01</strong></td>
+                  <td><br><small class="text-muted">110000001</small></td>
+                  <td><small>Pessoal: Adicional de Insalubridade</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-center"><span class="badge badge-acima90 rounded-pill px-2">20.600d</span></td>
+                </tr>
+                <tr>
+                  <td><strong>99990.000019/2026-01</strong></td>
+                  <td><br><small class="text-muted">110000003</small></td>
+                  <td><small>Patrimï¿½nio: Gestï¿½o de Bens Imï¿½veis</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-center"><span class="badge badge-acima90 rounded-pill px-2">20.600d</span></td>
+                </tr>
+                <tr>
+                  <td><strong>99990.000047/2026-72</strong></td>
+                  <td><br><small class="text-muted">110000001</small></td>
+                  <td><small>Acesso ï¿½ Informaï¿½ï¿½o: Demanda do e-SIC</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-end"><small>01/01/1970</small></td>
+                  <td class="text-center"><span class="badge badge-acima90 rounded-pill px-2">20.600d</span></td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="./dashboard_files/bootstrap.bundle.min.js.download"></script>
+<script src="./dashboard_files/chart.umd.min.js.download"></script>
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════════════════
+// DADOS PRÉ-CARREGADOS DO SERVIDOR (direto do SQL Server via PageModel)
+// ══════════════════════════════════════════════════════════════════════════
+const DADOS_SERVIDOR = {"usuario":{"siglaWindows":"c036713","nomeCompleto":"Benjamim Matos","siglaUnidade":"TESTE","idUnidade":"110000001","encontrado":true,"isAdmin":true,"idUsuario":"100000002","unidades":[{"idUnidade":"110000001","sigla":"TESTE","descricao":"Unidade de Teste 1","idUnidadePai":null}]},"totalProcessos":{"total":0,"totalAbertos":0,"totalConcluidos":0,"periodoInicio":"2026-02-25T00:00:00-03:00","periodoFim":"2026-05-26T00:00:00-03:00"},"tempoMedio":{"tempoMedioDiasUteis":0,"tempoMedianosDiasUteis":0,"totalProcessosComputados":0},"backlog":[{"idUnidade":"110000001","nomeUnidade":"","totalAbertos":4,"ate15Dias":0,"de16a30Dias":0,"de31a60Dias":0,"acima60Dias":4},{"idUnidade":"110000003","nomeUnidade":"","totalAbertos":1,"ate15Dias":0,"de16a30Dias":0,"de31a60Dias":0,"acima60Dias":1}],"documentos":{"mediaDocumentosPorProcesso":0,"medianaDocumentosPorProcesso":0,"maximoDocumentosEmUmProcesso":0},"tendencia":{"granularidade":"mes","serie":[]},"semMovimentacao":{"diasMinimos":30,"totalAfetados":5,"de30a60Dias":0,"de61a90Dias":0,"acima90Dias":5,"processos":[{"idSei":1,"numeroProcesso":"99990.000001/2026-53","idUnidade":"110000001","nomeUnidade":"","tipoProcesso":"Acesso \u00EF\u00BF\u00BD Informa\u00EF\u00BF\u00BD\u00EF\u00BF\u00BDo: Demanda do e-SIC","dtAutuacao":"1970-01-01T00:00:00","dtUltimaMovimentacao":"1970-01-01T00:00:00","diasParados":20600},{"idSei":1005,"numeroProcesso":"99990.000007/2026-01","idUnidade":"110000001","nomeUnidade":"","tipoProcesso":"Patrim\u00EF\u00BF\u00BDnio: Gest\u00EF\u00BF\u00BDo de Bens Im\u00EF\u00BF\u00BDveis","dtAutuacao":"1970-01-01T00:00:00","dtUltimaMovimentacao":"1970-01-01T00:00:00","diasParados":20600},{"idSei":1007,"numeroProcesso":"99990.000009/2026-01","idUnidade":"110000001","nomeUnidade":"","tipoProcesso":"Pessoal: Adicional de Insalubridade","dtAutuacao":"1970-01-01T00:00:00","dtUltimaMovimentacao":"1970-01-01T00:00:00","diasParados":20600},{"idSei":1017,"numeroProcesso":"99990.000019/2026-01","idUnidade":"110000003","nomeUnidade":"","tipoProcesso":"Patrim\u00EF\u00BF\u00BDnio: Gest\u00EF\u00BF\u00BDo de Bens Im\u00EF\u00BF\u00BDveis","dtAutuacao":"1970-01-01T00:00:00","dtUltimaMovimentacao":"1970-01-01T00:00:00","diasParados":20600},{"idSei":10004,"numeroProcesso":"99990.000047/2026-72","idUnidade":"110000001","nomeUnidade":"","tipoProcesso":"Acesso \u00EF\u00BF\u00BD Informa\u00EF\u00BF\u00BD\u00EF\u00BF\u00BDo: Demanda do e-SIC","dtAutuacao":"1970-01-01T00:00:00","dtUltimaMovimentacao":"1970-01-01T00:00:00","diasParados":20600}]},"andamento":[],"ranking":[],"unidades":[{"idUnidade":"110000001","nomeUnidade":""},{"idUnidade":"110000003","nomeUnidade":""}],"tiposProcesso":[{"tipoProcesso":"Acesso \u00EF\u00BF\u00BD Informa\u00EF\u00BF\u00BD\u00EF\u00BF\u00BDo: Demanda do e-SIC"},{"tipoProcesso":"Patrim\u00EF\u00BF\u00BDnio: Gest\u00EF\u00BF\u00BDo de Bens Im\u00EF\u00BF\u00BDveis"},{"tipoProcesso":"Pessoal: Adicional de Insalubridade"}]};
+
+console.log('✅ Dashboard carregado com dados diretos do SQL Server:', DADOS_SERVIDOR);
+
+// ── Renderizar Charts com dados do servidor ─────────────────────────────────
+
+// Backlog Chart
+if (DADOS_SERVIDOR.backlog && DADOS_SERVIDOR.backlog.length > 0) {
+  const top10 = DADOS_SERVIDOR.backlog.slice(0, 10);
+  const ctx = document.getElementById('chartBacklog').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: top10.map(r => r.nomeUnidade.length > 20 ? r.nomeUnidade.substring(0, 18) + '…' : r.nomeUnidade),
+      datasets: [
+        { label: '≤ 15 dias',  data: top10.map(r => r.ate15Dias),   backgroundColor: '#34d399' },
+        { label: '16–30 dias', data: top10.map(r => r.de16a30Dias), backgroundColor: '#fbbf24' },
+        { label: '31–60 dias', data: top10.map(r => r.de31a60Dias), backgroundColor: '#fb923c' },
+        { label: '> 60 dias',  data: top10.map(r => r.acima60Dias), backgroundColor: '#f87171' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 10 } } },
+        y: { stacked: true, ticks: { font: { size: 10 }, precision: 0 } }
+      }
+    }
+  });
+}
+
+// Documentos Chart
+if (DADOS_SERVIDOR.documentos) {
+  const d = DADOS_SERVIDOR.documentos;
+  const media = parseFloat(d.mediaDocumentosPorProcesso?.toFixed(1) ?? 0);
+  const mediana = d.medianaDocumentosPorProcesso ?? 0;
+  const maximo = d.maximoDocumentosEmUmProcesso ?? 0;
+  
+  if (media > 0 || mediana > 0 || maximo > 0) {
+    const ctx = document.getElementById('chartDocs').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Média', 'Mediana', 'Máximo'],
+        datasets: [{
+          data: [media, mediana, maximo],
+          backgroundColor: ['#6366f1', '#22c55e', '#f97316'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+        },
+        cutout: '65%'
+      }
+    });
+  }
+}
+
+// Tendência Chart
+if (DADOS_SERVIDOR.tendencia && DADOS_SERVIDOR.tendencia.serie && DADOS_SERVIDOR.tendencia.serie.length > 0) {
+  const serie = DADOS_SERVIDOR.tendencia.serie;
+  const ctx = document.getElementById('chartTendencia').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: serie.map(r => r.periodo),
+      datasets: [
+        {
+          label: 'Abertos',
+          data: serie.map(r => r.abertos),
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245,158,11,0.1)',
+          borderWidth: 2,
+          pointRadius: 3,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Concluídos',
+          data: serie.map(r => r.concluidos),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.08)',
+          borderWidth: 2,
+          pointRadius: 3,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Total',
+          data: serie.map(r => r.total),
+          borderColor: '#6366f1',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 3],
+          pointRadius: 2,
+          fill: false,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 } } },
+        y: { ticks: { font: { size: 10 }, precision: 0 }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+console.log('✅ Gráficos renderizados com sucesso usando dados do SQL Server');
+</script>
+
+
+</body></html>

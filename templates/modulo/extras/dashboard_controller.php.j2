@@ -13,22 +13,26 @@ class {{ ns }}DashboardController extends InfraController {
 
     private function coletarEstatisticas() {
         $stats = [];
+        $objInfraBanco = BancoSEI::getInstance();
+        $objInfraBanco->abrirConexao();
+
         {% for tabela in d.tabelas %}
-        // Totais — {{ tabela.nome }}
-        $obj{{ tabela.nome | pascalcase }}DTO = new {{ ns }}{{ tabela.nome | pascalcase }}DTO();
-        (new {{ ns }}{{ tabela.nome | pascalcase }}RN())->listar($obj{{ tabela.nome | pascalcase }}DTO);
-        $stats['total_{{ tabela.nome }}'] = count($obj{{ tabela.nome | pascalcase }}DTO->toArray());
+        // Total — {{ tabela.nome }}
+        $rowTotal = $objInfraBanco->consultarSql("SELECT COUNT(*) as total FROM {{ tabela.nome }}");
+        $stats['total_{{ tabela.nome }}'] = $rowTotal[0]['total'] ?? 0;
+
+        // Últimos 5 itens — {{ tabela.nome }}
+        $stats['recent_{{ tabela.nome }}'] = $objInfraBanco->consultarSql("SELECT * FROM {{ tabela.nome }} ORDER BY 1 DESC", 5);
 
         {% for col in tabela.colunas %}
         {% if col.tipo == 'char(1)' and not col.chave_primaria %}
         // Distribuição por {{ col.nome }}
-        $objDist_{{ col.nome }} = new {{ ns }}{{ tabela.nome | pascalcase }}DTO();
-        $objDist_{{ col.nome }}->setStrAgrupamento('{{ tabela.alias }}.{{ col.nome }}');
-        (new {{ ns }}{{ tabela.nome | pascalcase }}RN())->listar($objDist_{{ col.nome }});
-        $stats['dist_{{ tabela.nome }}_{{ col.nome }}'] = $objDist_{{ col.nome }}->toArray();
+        $stats['dist_{{ tabela.nome }}_{{ col.nome }}'] = $objInfraBanco->consultarSql("SELECT {{ col.nome }} as label, COUNT(*) as total FROM {{ tabela.nome }} GROUP BY {{ col.nome }}");
         {% endif %}
         {% endfor %}
         {% endfor %}
+
+        $objInfraBanco->fecharConexao();
         return $stats;
     }
 }

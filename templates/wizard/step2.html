@@ -5,6 +5,12 @@
 <p class="text-sm text-gray-500 mb-6">Arraste as tabelas e colunas para reordenar.</p>
 
 <form method="POST" action="/wizard/2" x-data="tabelasApp()" x-init="init()" @submit.prevent="enviarForm($event)">
+  {% if "dashboard" in request.session.get("step1", {}).get("extras", []) %}
+  <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex gap-2">
+    <i class="bi bi-info-circle-fill"></i>
+    <span><strong>Aviso:</strong> Você selecionou o recurso de <strong>Dashboard</strong>. Adicione pelo menos uma tabela para que os gráficos possam ser gerados.</span>
+  </div>
+  {% endif %}
   <div class="mb-2">Tabelas criadas: <span x-text="tabelas.length"></span></div>
   <div id="sortable-tabelas" class="space-y-4">
     <template x-for="(tabela, ti) in tabelas" :key="ti">

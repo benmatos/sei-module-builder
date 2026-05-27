@@ -73,10 +73,24 @@ class ModuloDefinicao(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validar_fks(self) -> "ModuloDefinicao":
+    def validar_fks_e_extras(self) -> "ModuloDefinicao":
         tabelas_validas = {t.nome for t in self.tabelas}
         tabelas_sei_nativas = {"documento", "procedimento", "unidade", "usuario", "protocolo"}
 
+        # 1. Validar Dashboard (exige tabelas)
+        if "dashboard" in self.extras and not self.tabelas:
+            raise ValueError("O recurso de Dashboard exige a definição de pelo menos uma tabela para gerar os indicadores.")
+
+        # 2. Garantir Recurso do Dashboard
+        if "dashboard" in self.extras:
+            existe = any(r.nome == "md_dashboard_visualizar" for r in self.recursos)
+            if not existe:
+                self.recursos.append(RecursoDTO(
+                    nome="md_dashboard_visualizar",
+                    descricao=f"Visualizar Dashboard do módulo {self.nome}"
+                ))
+
+        # 3. Validar FKs
         for tabela in self.tabelas:
             for col in tabela.colunas:
                 if col.fk:
